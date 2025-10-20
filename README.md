@@ -38,8 +38,8 @@ graph LR
     core_adapters --> core_protocol
     core_worker --> core_protocol
     managers_base --> core_protocol
-    managers_base --> extensions_protocols
     managers_base --> core_config
+    managers_base --> extensions_protocols
 ```
 
 *5 cross-module dependencies detected*
@@ -174,6 +174,96 @@ def extract_job_result(
 
 ``` python
 @patch
+def _extract_model_identifier(
+    self: BaseJobManager,
+    config: Dict[str, Any]  # Plugin configuration dictionary
+) -> str:  # Model identifier string
+    """
+    Extract model identifier from plugin configuration.
+    
+    Override this method in subclasses to customize model identifier extraction
+    based on your plugin's configuration structure.
+    
+    Args:
+        config: Plugin configuration dictionary
+        
+    Returns:
+        Model identifier string (e.g., model name, path, or ID)
+        
+    Example:
+        >>> # Default behavior - tries common keys
+        >>> manager._extract_model_identifier({'model_id': 'gpt-4'})
+        'gpt-4'
+        >>> manager._extract_model_identifier({'model': 'whisper-large'})
+        'whisper-large'
+        >>> manager._extract_model_identifier({'other': 'value'})
+        'unknown'
+    """
+```
+
+``` python
+@patch
+async def _validate_resources(
+    self: BaseJobManager,
+    plugin_id: str,  # Plugin unique identifier
+    plugin_config: Dict[str, Any]  # Plugin configuration
+) -> Optional[str]:  # Error message if validation fails, None if successful
+    """
+    Validate resources before starting a job.
+    
+    Override this method in subclasses to implement custom resource validation logic,
+    such as checking GPU availability, memory requirements, or concurrent job limits.
+    
+    This hook is called by start_job before creating and executing a job. If validation
+    fails, start_job will raise an exception with the returned error message.
+    
+    Args:
+        plugin_id: Unique identifier of the plugin
+        plugin_config: Configuration dictionary for the plugin
+        
+    Returns:
+        None if validation passes, or an error message string if validation fails
+        
+    Example:
+        >>> async def _validate_resources(self, plugin_id, plugin_config):
+        ...     if self.worker_process and self.current_plugin_id:
+        ...         return "Another job is already running"
+        ...     return None
+    """
+```
+
+``` python
+@patch
+def _on_job_completed(
+    self: BaseJobManager,
+    job_id: str  # ID of the completed job
+) -> None
+    """
+    Hook called when a job completes successfully.
+    
+    Override this method in subclasses to implement custom post-completion logic,
+    such as saving results to disk, sending notifications, or triggering follow-up tasks.
+    
+    This hook is called automatically by _handle_job_result after a job completes
+    successfully (but not when a job fails or is cancelled).
+    
+    Note: This is a synchronous method called from the result monitor thread.
+    If you need async operations, use asyncio.create_task() or similar.
+    
+    Args:
+        job_id: Unique identifier of the completed job
+        
+    Example:
+        >>> def _on_job_completed(self, job_id):
+        ...     job = self.get_job(job_id)
+        ...     result = self.get_job_result(job_id)
+        ...     # Save to file, database, etc.
+        ...     save_result_to_disk(job, result)
+    """
+```
+
+``` python
+@patch
 def _start_worker(self: BaseJobManager):
     """Start the worker process and result monitor."""
     if self.worker_process and self.worker_process.is_alive()
@@ -282,8 +372,8 @@ async def start_job(
     """
     Start a new job.
     
-    Note: Resource validation logic is removed since it depends on project-specific
-    resource management. Subclasses can override this method to add validation.
+    Calls the _validate_resources hook before starting the job. Override that
+    method in subclasses to add custom resource validation logic.
     """
 ```
 
@@ -800,7 +890,12 @@ Args:
         def update_worker_state(
             self,
             pid: int,  # Worker process ID
-            **kwargs  # State attributes to update (job_id, plugin_name, status, etc.)
+            status: Optional[str] = None,  # Worker status: 'idle', 'running', etc.
+            job_id: Optional[str] = None,  # Current job ID (None if idle)
+            plugin_name: Optional[str] = None,  # Currently loaded plugin name
+            plugin_id: Optional[str] = None,  # Currently loaded plugin ID
+            loaded_model: Optional[str] = None,  # Currently loaded model identifier
+            config: Optional[Dict[str, Any]] = None,  # Current plugin configuration
         ) -> None
         "Unregister a worker process.
 
@@ -810,13 +905,27 @@ Args:
     def update_worker_state(
             self,
             pid: int,  # Worker process ID
-            **kwargs  # State attributes to update (job_id, plugin_name, status, etc.)
+            status: Optional[str] = None,  # Worker status: 'idle', 'running', etc.
+            job_id: Optional[str] = None,  # Current job ID (None if idle)
+            plugin_name: Optional[str] = None,  # Currently loaded plugin name
+            plugin_id: Optional[str] = None,  # Currently loaded plugin ID
+            loaded_model: Optional[str] = None,  # Currently loaded model identifier
+            config: Optional[Dict[str, Any]] = None,  # Current plugin configuration
         ) -> None
         "Update worker state information.
 
+This method uses optional parameters to allow partial updates.
+Only provided parameters will be updated; None values can be used
+to clear state (e.g., when unloading a plugin).
+
 Args:
     pid: Process ID of the worker
-    **kwargs: State attributes (e.g., job_id='abc', status='running')"
+    status: Worker status (e.g., 'idle', 'running')
+    job_id: Current job identifier (None if no job running)
+    plugin_name: Name of currently loaded plugin
+    plugin_id: Unique identifier of currently loaded plugin
+    loaded_model: Identifier of currently loaded model
+    config: Current plugin configuration dictionary"
 ```
 
 ``` python

@@ -150,3 +150,16 @@ checklink/cookies.txt
 
 # Quarto
 .quarto
+
+
+
+# Custom
+*.sesskey
+*.claude
+/notebooks/
+/test_files/
+/configs/
+/demo_configs/
+.locks/
+/benchmarks/
+*.backup

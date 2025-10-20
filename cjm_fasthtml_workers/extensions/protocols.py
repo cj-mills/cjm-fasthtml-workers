@@ -78,14 +78,28 @@ class ResourceManagerProtocol(Protocol):
     def update_worker_state(
         self,
         pid: int,  # Worker process ID
-        **kwargs  # State attributes to update (job_id, plugin_name, status, etc.)
+        status: Optional[str] = None,  # Worker status: 'idle', 'running', etc.
+        job_id: Optional[str] = None,  # Current job ID (None if idle)
+        plugin_name: Optional[str] = None,  # Currently loaded plugin name
+        plugin_id: Optional[str] = None,  # Currently loaded plugin ID
+        loaded_model: Optional[str] = None,  # Currently loaded model identifier
+        config: Optional[Dict[str, Any]] = None,  # Current plugin configuration
     ) -> None:
         """
         Update worker state information.
         
+        This method uses optional parameters to allow partial updates.
+        Only provided parameters will be updated; None values can be used
+        to clear state (e.g., when unloading a plugin).
+        
         Args:
             pid: Process ID of the worker
-            **kwargs: State attributes (e.g., job_id='abc', status='running')
+            status: Worker status (e.g., 'idle', 'running')
+            job_id: Current job identifier (None if no job running)
+            plugin_name: Name of currently loaded plugin
+            plugin_id: Unique identifier of currently loaded plugin
+            loaded_model: Identifier of currently loaded model
+            config: Current plugin configuration dictionary
         """
         ...
 
