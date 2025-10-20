@@ -8,3 +8,545 @@
 ``` bash
 pip install cjm_fasthtml_workers
 ```
+
+## Project Structure
+
+    nbs/
+    ├── core/ (4)
+    │   ├── adapters.ipynb  # Adapter utilities for making plugin managers compatible with the worker system.
+    │   ├── config.ipynb    # Configuration for worker processes including restart policies, timeouts, and queue sizes.
+    │   ├── protocol.ipynb  # Protocol definitions for worker communication and plugin manager integration.
+    │   └── worker.ipynb    # Generic worker process for executing plugin-based jobs in isolated subprocesses.
+    └── extensions/ (1)
+        └── protocols.ipynb  # Optional integration protocols for plugin registries, resource management, and event broadcasting.
+
+Total: 5 notebooks across 3 directories
+
+## Module Dependencies
+
+``` mermaid
+graph LR
+    core_adapters[core.adapters<br/>adapters]
+    core_config[core.config<br/>config]
+    core_protocol[core.protocol<br/>protocol]
+    core_worker[core.worker<br/>worker]
+    extensions_protocols[extensions.protocols<br/>protocols]
+
+    core_adapters --> core_protocol
+    core_worker --> core_protocol
+```
+
+*2 cross-module dependencies detected*
+
+## CLI Reference
+
+No CLI commands found in this project.
+
+## Module Overview
+
+Detailed documentation for each module in the project:
+
+### adapters (`adapters.ipynb`)
+
+> Adapter utilities for making plugin managers compatible with the
+> worker system.
+
+#### Import
+
+``` python
+from cjm_fasthtml_workers.core.adapters import (
+    create_simple_adapter,
+    default_result_adapter
+)
+```
+
+#### Functions
+
+``` python
+def create_simple_adapter(
+    plugin_manager,  # The plugin manager instance to adapt
+    result_adapter: Optional[callable] = None  # Optional function to convert plugin results to dict
+) -> PluginManagerAdapter:  # Adapter that satisfies PluginManagerAdapter protocol
+    """
+    Create a simple adapter for a plugin manager.
+    
+    This is a convenience function that wraps a plugin manager object
+    to satisfy the PluginManagerAdapter protocol.
+    
+    Example:
+        >>> from some_plugin_system import PluginManager
+        >>> pm = PluginManager()
+        >>> adapter = create_simple_adapter(pm)
+        >>> # adapter now satisfies PluginManagerAdapter protocol
+    """
+```
+
+``` python
+def default_result_adapter(
+    result: Any  # Plugin execution result
+) -> Dict[str, Any]:  # Dictionary with text and metadata
+    """
+    Default adapter for converting plugin results to dictionaries.
+    
+    Assumes result has 'text' and 'metadata' attributes.
+    """
+```
+
+### config (`config.ipynb`)
+
+> Configuration for worker processes including restart policies,
+> timeouts, and queue sizes.
+
+#### Import
+
+``` python
+from cjm_fasthtml_workers.core.config import (
+    RestartPolicy,
+    WorkerConfig
+)
+```
+
+#### Classes
+
+``` python
+class RestartPolicy(Enum):
+    "Policy for restarting worker processes after failures."
+```
+
+``` python
+@dataclass
+class WorkerConfig:
+    "Configuration for worker process behavior."
+    
+    request_queue_size: int = 0  # 0 = unlimited
+    result_queue_size: int = 100  # Larger for streaming results
+    response_queue_size: int = 10  # For synchronous command responses
+    restart_policy: RestartPolicy = RestartPolicy.ON_CANCELLATION
+    max_restart_attempts: int = 3
+    restart_backoff_base_seconds: float = 1.0  # Base delay for exponential backoff
+    restart_backoff_max_seconds: float = 60.0  # Max delay for backoff
+    max_workers: int = 1  # Currently only 1 is supported
+    worker_start_timeout_seconds: float = 30.0
+    reload_timeout_seconds: float = 30.0
+    unload_timeout_seconds: float = 10.0
+    shutdown_timeout_seconds: float = 5.0
+    result_monitor_poll_interval_seconds: float = 0.5
+    
+```
+
+### protocol (`protocol.ipynb`)
+
+> Protocol definitions for worker communication and plugin manager
+> integration.
+
+#### Import
+
+``` python
+from cjm_fasthtml_workers.core.protocol import (
+    WorkerRequestType,
+    WorkerResponseType,
+    WorkerRequest,
+    WorkerResponse,
+    WorkerStreamChunk,
+    WorkerResult,
+    PluginManagerAdapter
+)
+```
+
+#### Classes
+
+``` python
+class WorkerRequestType(Enum):
+    "Types of requests sent to worker process."
+```
+
+``` python
+class WorkerResponseType(Enum):
+    "Types of responses from worker process."
+```
+
+``` python
+@dataclass
+class WorkerRequest:
+    "Base structure for worker requests."
+    
+    type: WorkerRequestType
+    data: Dict[str, Any]
+    
+    def to_dict(self) -> Dict[str, Any]:
+            """Convert to dictionary for queue serialization."""
+            return {
+                'type': self.type.value,
+        "Convert to dictionary for queue serialization."
+    
+    def from_dict(cls, data: Dict[str, Any]) -> 'WorkerRequest':
+            """Create from dictionary received from queue."""
+            req_type = WorkerRequestType(data['type'])
+            request_data = {k: v for k, v in data.items() if k != 'type'}
+        "Create from dictionary received from queue."
+```
+
+``` python
+@dataclass
+class WorkerResponse:
+    "Base structure for worker responses."
+    
+    type: WorkerResponseType
+    data: Dict[str, Any]
+    
+    def to_dict(self) -> Dict[str, Any]:
+            """Convert to dictionary for queue serialization."""
+            return {
+                'type': self.type.value,
+        "Convert to dictionary for queue serialization."
+    
+    def from_dict(cls, data: Dict[str, Any]) -> 'WorkerResponse':
+            """Create from dictionary received from queue."""
+            resp_type = WorkerResponseType(data['type'])
+            response_data = {k: v for k, v in data.items() if k != 'type'}
+        "Create from dictionary received from queue."
+```
+
+``` python
+@dataclass
+class WorkerStreamChunk:
+    "Structure for streaming job results."
+    
+    job_id: str  # Unique identifier for the job
+    chunk: str  # Text chunk from streaming output
+    is_final: bool = False  # Whether this is the final chunk
+    metadata: Optional[Dict[str, Any]]  # Optional metadata
+    
+    def to_dict(self) -> Dict[str, Any]:
+            """Convert to dictionary for queue serialization."""
+            return {
+                'type': WorkerResponseType.STREAM_CHUNK.value,
+        "Convert to dictionary for queue serialization."
+```
+
+``` python
+@dataclass
+class WorkerResult:
+    "Structure for job execution results."
+    
+    job_id: str  # Unique identifier for the job
+    status: str  # 'success' or 'error'
+    data: Optional[Dict[str, Any]]  # Result data on success
+    error: Optional[str]  # Error message on failure
+    
+    def to_dict(self) -> Dict[str, Any]:
+            """Convert to dictionary for queue serialization."""
+            result = {
+                'type': WorkerResponseType.RESULT.value,
+        "Convert to dictionary for queue serialization."
+```
+
+``` python
+class PluginManagerAdapter(Protocol):
+    """
+    Protocol that plugin managers must satisfy for worker integration.
+    
+    Uses structural subtyping (duck typing) - plugin managers don't need to
+    explicitly inherit from this, they just need to implement these methods.
+    """
+    
+    def discover_plugins(self) -> list:
+            """
+            Discover available plugins.
+    
+            Returns:
+                List of plugin metadata/data objects
+            """
+            ...
+    
+        def load_plugin(self, plugin_data: Any, config: Dict[str, Any]) -> None
+        "Discover available plugins.
+
+Returns:
+    List of plugin metadata/data objects"
+    
+    def load_plugin(self, plugin_data: Any, config: Dict[str, Any]) -> None:
+            """
+            Load a plugin with configuration.
+    
+            Args:
+                plugin_data: Plugin metadata/data from discovery
+                config: Plugin configuration dictionary
+            """
+            ...
+    
+        def execute_plugin(self, plugin_name: str, **params) -> Any
+        "Load a plugin with configuration.
+
+Args:
+    plugin_data: Plugin metadata/data from discovery
+    config: Plugin configuration dictionary"
+    
+    def execute_plugin(self, plugin_name: str, **params) -> Any:
+            """
+            Execute a plugin with given parameters.
+    
+            Args:
+                plugin_name: Name of the plugin to execute
+                **params: Plugin-specific parameters
+    
+            Returns:
+                Plugin execution result
+            """
+            ...
+    
+        def execute_plugin_stream(self, plugin_name: str, **params) -> Iterator[str]
+        "Execute a plugin with given parameters.
+
+Args:
+    plugin_name: Name of the plugin to execute
+    **params: Plugin-specific parameters
+
+Returns:
+    Plugin execution result"
+    
+    def execute_plugin_stream(self, plugin_name: str, **params) -> Iterator[str]:
+            """
+            Execute a plugin with streaming output.
+    
+            Args:
+                plugin_name: Name of the plugin to execute
+                **params: Plugin-specific parameters
+    
+            Yields:
+                String chunks from plugin execution
+            """
+            ...
+    
+        def reload_plugin(self, plugin_name: str, config: Optional[Dict[str, Any]] = None) -> None
+        "Execute a plugin with streaming output.
+
+Args:
+    plugin_name: Name of the plugin to execute
+    **params: Plugin-specific parameters
+
+Yields:
+    String chunks from plugin execution"
+    
+    def reload_plugin(self, plugin_name: str, config: Optional[Dict[str, Any]] = None) -> None:
+            """
+            Reload a plugin with new configuration.
+    
+            Args:
+                plugin_name: Name of the plugin to reload
+                config: New configuration (None to unload)
+            """
+            ...
+    
+        def unload_plugin(self, plugin_name: str) -> None
+        "Reload a plugin with new configuration.
+
+Args:
+    plugin_name: Name of the plugin to reload
+    config: New configuration (None to unload)"
+    
+    def unload_plugin(self, plugin_name: str) -> None:
+            """
+            Unload a plugin to free resources.
+    
+            Args:
+                plugin_name: Name of the plugin to unload
+            """
+            ...
+    
+        def check_streaming_support(self, plugin_name: str) -> bool
+        "Unload a plugin to free resources.
+
+Args:
+    plugin_name: Name of the plugin to unload"
+    
+    def check_streaming_support(self, plugin_name: str) -> bool
+        "Check if a plugin supports streaming execution.
+
+Args:
+    plugin_name: Name of the plugin to check
+
+Returns:
+    True if plugin supports streaming"
+```
+
+### protocols (`protocols.ipynb`)
+
+> Optional integration protocols for plugin registries, resource
+> management, and event broadcasting.
+
+#### Import
+
+``` python
+from cjm_fasthtml_workers.extensions.protocols import (
+    PluginRegistryProtocol,
+    ResourceManagerProtocol,
+    EventBroadcasterProtocol
+)
+```
+
+#### Classes
+
+``` python
+class PluginRegistryProtocol(Protocol):
+    "Protocol for plugin registry integration."
+    
+    def get_plugins_by_category(self, category: Any) -> list:
+            """
+            Get all plugins in a specific category.
+            
+            Args:
+                category: Plugin category (can be enum, string, etc.)
+                
+            Returns:
+                List of plugin metadata objects
+            """
+            ...
+        
+        def get_plugin(self, plugin_id: str) -> Any
+        "Get all plugins in a specific category.
+
+Args:
+    category: Plugin category (can be enum, string, etc.)
+    
+Returns:
+    List of plugin metadata objects"
+    
+    def get_plugin(self, plugin_id: str) -> Any:
+            """
+            Get a specific plugin by ID.
+            
+            Args:
+                plugin_id: Unique plugin identifier
+                
+            Returns:
+                Plugin metadata object or None
+            """
+            ...
+        
+        def load_plugin_config(self, plugin_id: str) -> Dict[str, Any]
+        "Get a specific plugin by ID.
+
+Args:
+    plugin_id: Unique plugin identifier
+    
+Returns:
+    Plugin metadata object or None"
+    
+    def load_plugin_config(self, plugin_id: str) -> Dict[str, Any]
+        "Load configuration for a plugin.
+
+Args:
+    plugin_id: Unique plugin identifier
+    
+Returns:
+    Plugin configuration dictionary"
+```
+
+``` python
+class ResourceManagerProtocol(Protocol):
+    "Protocol for resource management integration."
+    
+    def register_worker(
+            self,
+            pid: int,  # Worker process ID
+            worker_type: str  # Type of worker (e.g., 'transcription', 'llm')
+        ) -> None
+        "Register a new worker process.
+
+Args:
+    pid: Process ID of the worker
+    worker_type: Type identifier for the worker"
+    
+    def unregister_worker(self, pid: int) -> None:
+            """
+            Unregister a worker process.
+            
+            Args:
+                pid: Process ID of the worker to unregister
+            """
+            ...
+        
+        def update_worker_state(
+            self,
+            pid: int,  # Worker process ID
+            **kwargs  # State attributes to update (job_id, plugin_name, status, etc.)
+        ) -> None
+        "Unregister a worker process.
+
+Args:
+    pid: Process ID of the worker to unregister"
+    
+    def update_worker_state(
+            self,
+            pid: int,  # Worker process ID
+            **kwargs  # State attributes to update (job_id, plugin_name, status, etc.)
+        ) -> None
+        "Update worker state information.
+
+Args:
+    pid: Process ID of the worker
+    **kwargs: State attributes (e.g., job_id='abc', status='running')"
+```
+
+``` python
+class EventBroadcasterProtocol(Protocol):
+    "Protocol for SSE event broadcasting."
+    
+    async def broadcast(
+            self,
+            event_type: str,  # Event type identifier
+            data: Dict[str, Any]  # Event data payload
+        ) -> None
+        "Broadcast an event to all connected clients.
+
+Args:
+    event_type: Type of event (e.g., 'job:started', 'job:completed')
+    data: Event data to broadcast"
+```
+
+### worker (`worker.ipynb`)
+
+> Generic worker process for executing plugin-based jobs in isolated
+> subprocesses.
+
+#### Import
+
+``` python
+from cjm_fasthtml_workers.core.worker import (
+    base_worker_process
+)
+```
+
+#### Functions
+
+``` python
+def base_worker_process(
+    request_queue: multiprocessing.Queue,  # Queue for receiving job requests from parent
+    result_queue: multiprocessing.Queue,  # Queue for sending job results back to parent
+    response_queue: multiprocessing.Queue,  # Queue for sending command responses back to parent
+    plugin_manager_factory: Callable[[], PluginManagerAdapter],  # Factory function that creates a plugin manager instance
+    result_adapter: Optional[Callable[[Any], Dict[str, Any]]] = None,  # Optional function to adapt plugin results to dict format
+    supports_streaming: bool = False  # Whether this worker supports streaming execution
+)
+    """
+    Generic long-lived worker process that handles job execution.
+    
+    This process:
+    1. Receives plugin configurations through init message
+    2. Initializes the plugin manager once with provided configs
+    3. Loads models lazily on first use (and keeps them loaded)
+    4. Processes jobs from the request queue
+    5. Sends job results back via result queue
+    6. Sends command responses back via response queue
+    7. Can be terminated for cancellation
+    
+    Protocol:
+        - Parent sends 'init' message first with plugin configurations
+        - Then sends 'execute' messages for jobs
+        - Sends 'unload' to unload a specific plugin
+        - Sends 'reload' to reload a plugin with new configuration
+        - Sends 'get_state' to query current worker state
+        - Sends 'stop' to gracefully shutdown
+    """
+```
