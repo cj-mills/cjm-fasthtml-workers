@@ -78,12 +78,6 @@ def create_simple_adapter(
     
     This is a convenience function that wraps a plugin manager object
     to satisfy the PluginManagerAdapter protocol.
-    
-    Example:
-        >>> from some_plugin_system import PluginManager
-        >>> pm = PluginManager()
-        >>> adapter = create_simple_adapter(pm)
-        >>> # adapter now satisfies PluginManagerAdapter protocol
     """
 ```
 
@@ -183,21 +177,6 @@ def _extract_model_identifier(
     
     Override this method in subclasses to customize model identifier extraction
     based on your plugin's configuration structure.
-    
-    Args:
-        config: Plugin configuration dictionary
-        
-    Returns:
-        Model identifier string (e.g., model name, path, or ID)
-        
-    Example:
-        >>> # Default behavior - tries common keys
-        >>> manager._extract_model_identifier({'model_id': 'gpt-4'})
-        'gpt-4'
-        >>> manager._extract_model_identifier({'model': 'whisper-large'})
-        'whisper-large'
-        >>> manager._extract_model_identifier({'other': 'value'})
-        'unknown'
     """
 ```
 
@@ -216,19 +195,6 @@ async def _validate_resources(
     
     This hook is called by start_job before creating and executing a job. If validation
     fails, start_job will raise an exception with the returned error message.
-    
-    Args:
-        plugin_id: Unique identifier of the plugin
-        plugin_config: Configuration dictionary for the plugin
-        
-    Returns:
-        None if validation passes, or an error message string if validation fails
-        
-    Example:
-        >>> async def _validate_resources(self, plugin_id, plugin_config):
-        ...     if self.worker_process and self.current_plugin_id:
-        ...         return "Another job is already running"
-        ...     return None
     """
 ```
 
@@ -249,16 +215,6 @@ def _on_job_completed(
     
     Note: This is a synchronous method called from the result monitor thread.
     If you need async operations, use asyncio.create_task() or similar.
-    
-    Args:
-        job_id: Unique identifier of the completed job
-        
-    Example:
-        >>> def _on_job_completed(self, job_id):
-        ...     job = self.get_job(job_id)
-        ...     result = self.get_job_result(job_id)
-        ...     # Save to file, database, etc.
-        ...     save_result_to_disk(job, result)
     """
 ```
 
@@ -971,21 +927,8 @@ def base_worker_process(
     """
     Generic long-lived worker process that handles job execution.
     
-    This process:
-    1. Receives plugin configurations through init message
-    2. Initializes the plugin manager once with provided configs
-    3. Loads models lazily on first use (and keeps them loaded)
-    4. Processes jobs from the request queue
-    5. Sends job results back via result queue
-    6. Sends command responses back via response queue
-    7. Can be terminated for cancellation
-    
-    Protocol:
-        - Parent sends 'init' message first with plugin configurations
-        - Then sends 'execute' messages for jobs
-        - Sends 'unload' to unload a specific plugin
-        - Sends 'reload' to reload a plugin with new configuration
-        - Sends 'get_state' to query current worker state
-        - Sends 'stop' to gracefully shutdown
+    The worker runs in an isolated subprocess, receiving jobs from the parent process
+    via queues and sending results back. It manages plugin lifecycle and can be 
+    terminated for cancellation.
     """
 ```

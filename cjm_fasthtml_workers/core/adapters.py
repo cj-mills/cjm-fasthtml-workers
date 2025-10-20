@@ -19,12 +19,6 @@ def create_simple_adapter(
 
     This is a convenience function that wraps a plugin manager object
     to satisfy the PluginManagerAdapter protocol.
-
-    Example:
-        >>> from some_plugin_system import PluginManager
-        >>> pm = PluginManager()
-        >>> adapter = create_simple_adapter(pm)
-        >>> # adapter now satisfies PluginManagerAdapter protocol
     """
 
     class SimpleAdapter:
@@ -70,7 +64,7 @@ def create_simple_adapter(
 
     return SimpleAdapter(plugin_manager, result_adapter)
 
-# %% ../../nbs/core/adapters.ipynb 7
+# %% ../../nbs/core/adapters.ipynb 12
 def default_result_adapter(
     result: Any  # Plugin execution result
 ) -> Dict[str, Any]:  # Dictionary with text and metadata

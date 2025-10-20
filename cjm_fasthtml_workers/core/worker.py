@@ -27,23 +27,10 @@ def base_worker_process(
 ):
     """
     Generic long-lived worker process that handles job execution.
-
-    This process:
-    1. Receives plugin configurations through init message
-    2. Initializes the plugin manager once with provided configs
-    3. Loads models lazily on first use (and keeps them loaded)
-    4. Processes jobs from the request queue
-    5. Sends job results back via result queue
-    6. Sends command responses back via response queue
-    7. Can be terminated for cancellation
-
-    Protocol:
-        - Parent sends 'init' message first with plugin configurations
-        - Then sends 'execute' messages for jobs
-        - Sends 'unload' to unload a specific plugin
-        - Sends 'reload' to reload a plugin with new configuration
-        - Sends 'get_state' to query current worker state
-        - Sends 'stop' to gracefully shutdown
+    
+    The worker runs in an isolated subprocess, receiving jobs from the parent process
+    via queues and sending results back. It manages plugin lifecycle and can be 
+    terminated for cancellation.
     """
     try:
         plugin_manager: Optional[PluginManagerAdapter] = None

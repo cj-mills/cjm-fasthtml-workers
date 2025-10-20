@@ -17,7 +17,7 @@ class RestartPolicy(Enum):
     ALWAYS = "always"  # Always restart on any failure
     BACKOFF = "backoff"  # Restart with exponential backoff
 
-# %% ../../nbs/core/config.ipynb 8
+# %% ../../nbs/core/config.ipynb 9
 @dataclass
 class WorkerConfig:
     """Configuration for worker process behavior."""

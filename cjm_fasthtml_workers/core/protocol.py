@@ -11,7 +11,7 @@ from typing import Dict, Any, Optional, Iterator, Protocol
 from enum import Enum
 from dataclasses import dataclass
 
-# %% ../../nbs/core/protocol.ipynb 5
+# %% ../../nbs/core/protocol.ipynb 6
 class WorkerRequestType(Enum):
     """Types of requests sent to worker process."""
     INIT = "init"
@@ -21,7 +21,7 @@ class WorkerRequestType(Enum):
     GET_STATE = "get_state"
     STOP = "stop"
 
-# %% ../../nbs/core/protocol.ipynb 6
+# %% ../../nbs/core/protocol.ipynb 7
 class WorkerResponseType(Enum):
     """Types of responses from worker process."""
     READY = "ready"
@@ -31,7 +31,7 @@ class WorkerResponseType(Enum):
     STATE = "state"
     ERROR = "error"
 
-# %% ../../nbs/core/protocol.ipynb 8
+# %% ../../nbs/core/protocol.ipynb 10
 @dataclass
 class WorkerRequest:
     """Base structure for worker requests."""
@@ -52,7 +52,7 @@ class WorkerRequest:
         request_data = {k: v for k, v in data.items() if k != 'type'}
         return cls(type=req_type, data=request_data)
 
-# %% ../../nbs/core/protocol.ipynb 9
+# %% ../../nbs/core/protocol.ipynb 14
 @dataclass
 class WorkerResponse:
     """Base structure for worker responses."""
@@ -73,7 +73,7 @@ class WorkerResponse:
         response_data = {k: v for k, v in data.items() if k != 'type'}
         return cls(type=resp_type, data=response_data)
 
-# %% ../../nbs/core/protocol.ipynb 10
+# %% ../../nbs/core/protocol.ipynb 16
 @dataclass
 class WorkerStreamChunk:
     """Structure for streaming job results."""
@@ -92,7 +92,7 @@ class WorkerStreamChunk:
             'metadata': self.metadata or {}
         }
 
-# %% ../../nbs/core/protocol.ipynb 11
+# %% ../../nbs/core/protocol.ipynb 18
 @dataclass
 class WorkerResult:
     """Structure for job execution results."""
@@ -114,7 +114,7 @@ class WorkerResult:
             result['error'] = self.error
         return result
 
-# %% ../../nbs/core/protocol.ipynb 13
+# %% ../../nbs/core/protocol.ipynb 23
 class PluginManagerAdapter(Protocol):
     """
     Protocol that plugin managers must satisfy for worker integration.
