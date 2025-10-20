@@ -5,7 +5,7 @@ This demo tests all library features:
 - Worker processes with plugin system
 - Job creation, monitoring, and completion
 - Job cancellation and worker restart
-- Hook methods (_on_job_completed, _validate_resources, _extract_model_identifier)
+- Hook methods (_on_job_completed, _validate_resources, _extract_plugin_resource_identifier)
 - Optional integrations (ResourceManager, EventBroadcaster, PluginRegistry)
 - WorkerConfig and RestartPolicy
 """
@@ -195,7 +195,7 @@ class MockResourceManager:
         job_id: Optional[str] = None,
         plugin_name: Optional[str] = None,
         plugin_id: Optional[str] = None,
-        loaded_model: Optional[str] = None,
+        loaded_plugin_resource: Optional[str] = None,
         config: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Update worker state."""
@@ -210,15 +210,15 @@ class MockResourceManager:
             self.workers[pid]['plugin_name'] = plugin_name
         if plugin_id is not None:
             self.workers[pid]['plugin_id'] = plugin_id
-        if loaded_model is not None:
-            self.workers[pid]['loaded_model'] = loaded_model
+        if loaded_plugin_resource is not None:
+            self.workers[pid]['loaded_plugin_resource'] = loaded_plugin_resource
 
         # Log for demo visibility
         state_str = f"status={status}" if status else ""
         if job_id:
             state_str += f", job={job_id[:8]}"
-        if loaded_model:
-            state_str += f", model={loaded_model}"
+        if loaded_plugin_resource:
+            state_str += f", resource={loaded_plugin_resource}"
         if state_str:
             print(f"[ResourceMgr] Worker {pid}: {state_str}")
 
@@ -355,11 +355,11 @@ class TextProcessingManager(BaseJobManager[TextProcessingJob]):
         """Extract job result."""
         return result_data
 
-    # Hook: Extract model identifier
-    def _extract_model_identifier(self, config: Dict[str, Any]) -> str:
-        """Custom model ID extraction."""
+    # Hook: Extract plugin resource identifier
+    def _extract_plugin_resource_identifier(self, config: Dict[str, Any]) -> str:
+        """Custom plugin resource ID extraction."""
         # Demo: try model_id, then model, then fallback
-        return config.get('model_id', config.get('model', 'unknown-model'))
+        return config.get('model_id', config.get('model', 'unknown-resource'))
 
     # Hook: Validate resources before job
     async def _validate_resources(self, plugin_id: str, plugin_config: Dict[str, Any]) -> Optional[str]:
@@ -707,7 +707,7 @@ def main():
         print(f"  • {plugin.name}")
 
     print("\n🎣 Custom Hooks:")
-    print("  • _extract_model_identifier() - Custom model ID extraction")
+    print("  • _extract_plugin_resource_identifier() - Custom plugin resource ID extraction")
     print("  • _validate_resources() - Pre-job validation")
     print("  • _on_job_completed() - Post-completion handler")
 

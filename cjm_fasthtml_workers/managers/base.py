@@ -62,7 +62,7 @@ class BaseJobManager(ABC, Generic[JobType]):
 
     Features:
     - Jobs processed sequentially in subprocess
-    - Models loaded once and reused
+    - Plugin resources loaded once and reused
     - True cancellation via subprocess termination
     - Automatic worker restart based on policy
     - Isolated worker process avoids duplicating web app initialization
@@ -184,18 +184,22 @@ def extract_job_result(
 
 # %% ../../nbs/managers/base.ipynb 16
 @patch
-def _extract_model_identifier(
+def _extract_plugin_resource_identifier(
     self: BaseJobManager,
     config: Dict[str, Any]  # Plugin configuration dictionary
-) -> str:  # Model identifier string
+) -> str:  # Plugin resource identifier string
     """
-    Extract model identifier from plugin configuration.
+    Extract plugin resource identifier from plugin configuration.
     
-    Override this method in subclasses to customize model identifier extraction
+    Override this method in subclasses to customize plugin resource identifier extraction
     based on your plugin's configuration structure.
     """
     # Try common configuration keys in order of preference
-    return config.get('model_id', config.get('model', config.get('model_name', 'unknown')))
+    # Check 'resource_id' first, then fallback to common model-related keys for backward compatibility
+    return config.get('resource_id', 
+                     config.get('model_id', 
+                     config.get('model', 
+                     config.get('model_name', 'unknown'))))
 
 # %% ../../nbs/managers/base.ipynb 18
 @patch
@@ -505,7 +509,7 @@ async def unload_plugin(
                         pid=self.worker_process.pid,
                         plugin_name=None,
                         plugin_id=None,
-                        loaded_model=None,
+                        loaded_plugin_resource=None,
                         config=None,
                         status="idle"
                     )
@@ -565,13 +569,13 @@ async def reload_plugin(
 
                 # Update resource manager if available
                 if self.resource_manager and self.worker_process:
-                    # Use helper method to extract model identifier
-                    model_id = self._extract_model_identifier(config)
+                    # Use helper method to extract plugin resource identifier
+                    resource_id = self._extract_plugin_resource_identifier(config)
                     self.resource_manager.update_worker_state(
                         pid=self.worker_process.pid,
                         plugin_name=plugin_name,
                         plugin_id=self.current_plugin_id,
-                        loaded_model=model_id,
+                        loaded_plugin_resource=resource_id,
                         config=config,
                         status="idle"
                     )
@@ -640,14 +644,14 @@ async def start_job(
 
     # Update resource manager if available
     if self.resource_manager and self.worker_process and plugin_config:
-        # Use helper method to extract model identifier
-        model_id = self._extract_model_identifier(plugin_config)
+        # Use helper method to extract plugin resource identifier
+        resource_id = self._extract_plugin_resource_identifier(plugin_config)
         self.resource_manager.update_worker_state(
             pid=self.worker_process.pid,
             job_id=job.id,
             plugin_name=plugin_name,
             plugin_id=plugin_id,
-            loaded_model=model_id,
+            loaded_plugin_resource=resource_id,
             config=plugin_config,
             status="running"
         )

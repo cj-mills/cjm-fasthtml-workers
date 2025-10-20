@@ -82,7 +82,7 @@ class ResourceManagerProtocol(Protocol):
         job_id: Optional[str] = None,  # Current job ID (None if idle)
         plugin_name: Optional[str] = None,  # Currently loaded plugin name
         plugin_id: Optional[str] = None,  # Currently loaded plugin ID
-        loaded_model: Optional[str] = None,  # Currently loaded model identifier
+        loaded_plugin_resource: Optional[str] = None,  # Currently loaded plugin resource identifier
         config: Optional[Dict[str, Any]] = None,  # Current plugin configuration
     ) -> None:
         """
@@ -98,7 +98,7 @@ class ResourceManagerProtocol(Protocol):
             job_id: Current job identifier (None if no job running)
             plugin_name: Name of currently loaded plugin
             plugin_id: Unique identifier of currently loaded plugin
-            loaded_model: Identifier of currently loaded model
+            loaded_plugin_resource: Identifier of currently loaded plugin resource
             config: Current plugin configuration dictionary
         """
         ...

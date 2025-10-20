@@ -168,14 +168,14 @@ def extract_job_result(
 
 ``` python
 @patch
-def _extract_model_identifier(
+def _extract_plugin_resource_identifier(
     self: BaseJobManager,
     config: Dict[str, Any]  # Plugin configuration dictionary
-) -> str:  # Model identifier string
+) -> str:  # Plugin resource identifier string
     """
-    Extract model identifier from plugin configuration.
+    Extract plugin resource identifier from plugin configuration.
     
-    Override this method in subclasses to customize model identifier extraction
+    Override this method in subclasses to customize plugin resource identifier extraction
     based on your plugin's configuration structure.
     """
 ```
@@ -444,7 +444,7 @@ class BaseJobManager:
     
     Features:
     - Jobs processed sequentially in subprocess
-    - Models loaded once and reused
+    - Plugin resources loaded once and reused
     - True cancellation via subprocess termination
     - Automatic worker restart based on policy
     - Isolated worker process avoids duplicating web app initialization
@@ -850,7 +850,7 @@ Args:
             job_id: Optional[str] = None,  # Current job ID (None if idle)
             plugin_name: Optional[str] = None,  # Currently loaded plugin name
             plugin_id: Optional[str] = None,  # Currently loaded plugin ID
-            loaded_model: Optional[str] = None,  # Currently loaded model identifier
+            loaded_plugin_resource: Optional[str] = None,  # Currently loaded plugin resource identifier
             config: Optional[Dict[str, Any]] = None,  # Current plugin configuration
         ) -> None
         "Unregister a worker process.
@@ -865,7 +865,7 @@ Args:
             job_id: Optional[str] = None,  # Current job ID (None if idle)
             plugin_name: Optional[str] = None,  # Currently loaded plugin name
             plugin_id: Optional[str] = None,  # Currently loaded plugin ID
-            loaded_model: Optional[str] = None,  # Currently loaded model identifier
+            loaded_plugin_resource: Optional[str] = None,  # Currently loaded plugin resource identifier
             config: Optional[Dict[str, Any]] = None,  # Current plugin configuration
         ) -> None
         "Update worker state information.
@@ -880,7 +880,7 @@ Args:
     job_id: Current job identifier (None if no job running)
     plugin_name: Name of currently loaded plugin
     plugin_id: Unique identifier of currently loaded plugin
-    loaded_model: Identifier of currently loaded model
+    loaded_plugin_resource: Identifier of currently loaded plugin resource
     config: Current plugin configuration dictionary"
 ```
 
