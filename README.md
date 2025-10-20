@@ -17,10 +17,12 @@ pip install cjm_fasthtml_workers
     │   ├── config.ipynb    # Configuration for worker processes including restart policies, timeouts, and queue sizes.
     │   ├── protocol.ipynb  # Protocol definitions for worker communication and plugin manager integration.
     │   └── worker.ipynb    # Generic worker process for executing plugin-based jobs in isolated subprocesses.
-    └── extensions/ (1)
-        └── protocols.ipynb  # Optional integration protocols for plugin registries, resource management, and event broadcasting.
+    ├── extensions/ (1)
+    │   └── protocols.ipynb  # Optional integration protocols for plugin registries, resource management, and event broadcasting.
+    └── managers/ (1)
+        └── base.ipynb  # Abstract base class for managing background jobs with worker processes.
 
-Total: 5 notebooks across 3 directories
+Total: 6 notebooks across 3 directories
 
 ## Module Dependencies
 
@@ -31,12 +33,16 @@ graph LR
     core_protocol[core.protocol<br/>protocol]
     core_worker[core.worker<br/>worker]
     extensions_protocols[extensions.protocols<br/>protocols]
+    managers_base[managers.base<br/>base]
 
     core_adapters --> core_protocol
     core_worker --> core_protocol
+    managers_base --> core_protocol
+    managers_base --> extensions_protocols
+    managers_base --> core_config
 ```
 
-*2 cross-module dependencies detected*
+*5 cross-module dependencies detected*
 
 ## CLI Reference
 
@@ -90,6 +96,330 @@ def default_result_adapter(
     
     Assumes result has 'text' and 'metadata' attributes.
     """
+```
+
+### base (`base.ipynb`)
+
+> Abstract base class for managing background jobs with worker
+> processes.
+
+#### Import
+
+``` python
+from cjm_fasthtml_workers.managers.base import (
+    JobType,
+    BaseJob,
+    BaseJobManager
+)
+```
+
+#### Functions
+
+``` python
+@patch
+@abstractmethod
+def create_job(
+    self: BaseJobManager,
+    plugin_id: str,  # Plugin unique identifier
+    **kwargs  # Domain-specific job parameters
+) -> JobType:  # Created job instance
+    """
+    Factory method for creating domain-specific jobs.
+    
+    Subclasses must implement this to create their specific job type.
+    """
+```
+
+``` python
+@patch
+@abstractmethod
+def get_worker_entry_point(
+    self: BaseJobManager
+) -> Callable:  # Worker process entry point function
+    """
+    Return the worker process function for this manager.
+    
+    Subclasses must implement this to provide their worker entry point.
+    """
+```
+
+``` python
+@patch
+@abstractmethod
+def prepare_execute_request(
+    self: BaseJobManager,
+    job: JobType  # The job to prepare for execution
+) -> Dict[str, Any]:  # Dictionary of parameters for the worker execute request
+    """
+    Convert job to worker execute request parameters.
+    
+    Subclasses must implement this to extract execution parameters from their job type.
+    """
+```
+
+``` python
+@patch
+@abstractmethod
+def extract_job_result(
+    self: BaseJobManager,
+    job: JobType,  # The job that was executed
+    result_data: Dict[str, Any]  # Raw result data from worker
+) -> Dict[str, Any]:  # Formatted result for storage
+    """
+    Extract and format job result from worker response.
+    
+    Subclasses must implement this to format results for their job type.
+    """
+```
+
+``` python
+@patch
+def _start_worker(self: BaseJobManager):
+    """Start the worker process and result monitor."""
+    if self.worker_process and self.worker_process.is_alive()
+    "Start the worker process and result monitor."
+```
+
+``` python
+@patch
+def _init_worker(self: BaseJobManager):
+    """Send initialization message to worker with plugin configurations."""
+    # Only send plugin configs if plugin registry is available
+    plugin_configs = {}
+    
+    if self.plugin_registry
+    "Send initialization message to worker with plugin configurations."
+```
+
+``` python
+@patch
+def _restart_worker(self: BaseJobManager):
+    """Restart the worker process after an error or cancellation."""
+    # Track restart
+    self.restart_count += 1
+    self.last_restart_time = time.time()
+
+    # Unregister old worker from resource manager if available
+    if self.resource_manager and self.worker_process
+    "Restart the worker process after an error or cancellation."
+```
+
+``` python
+@patch
+def _monitor_results(self: BaseJobManager):
+    """Monitor the result queue in a background thread."""
+    while self.monitor_running
+    "Monitor the result queue in a background thread."
+```
+
+``` python
+@patch
+def _handle_job_result(self: BaseJobManager, result: Dict[str, Any]):
+    """Handle a job result from the worker."""
+    job_id = result['job_id']
+
+    if job_id not in self.jobs
+    "Handle a job result from the worker."
+```
+
+``` python
+@patch
+def _handle_stream_chunk(self: BaseJobManager, chunk_data: Dict[str, Any]):
+    """Handle a streaming chunk from the worker."""
+    job_id = chunk_data.get('job_id')
+    chunk = chunk_data.get('chunk', '')
+    is_final = chunk_data.get('is_final', False)
+
+    if job_id not in self._stream_buffers
+    "Handle a streaming chunk from the worker."
+```
+
+``` python
+@patch
+def _handle_worker_error(self: BaseJobManager):
+    """Handle worker fatal error based on restart policy."""
+    policy = self.worker_config.restart_policy
+
+    if policy == RestartPolicy.NEVER
+    "Handle worker fatal error based on restart policy."
+```
+
+``` python
+@patch
+def get_plugin_name(
+    self: BaseJobManager,
+    plugin_id: str  # Plugin unique identifier
+) -> Optional[str]:  # Plugin name or None
+    "Get plugin name from plugin ID (requires plugin registry)."
+```
+
+``` python
+@patch
+async def unload_plugin(
+    self: BaseJobManager,
+    plugin_name: str  # Name of the plugin to unload
+) -> bool:  # True if successful, False otherwise
+    "Unload a plugin from the worker to free resources."
+```
+
+``` python
+@patch
+async def reload_plugin(
+    self: BaseJobManager,
+    plugin_name: str,  # Name of the plugin to reload
+    config: Dict[str, Any]  # New configuration
+) -> bool:  # True if successful, False otherwise
+    "Reload a plugin with new configuration."
+```
+
+``` python
+@patch
+async def start_job(
+    self: BaseJobManager,
+    plugin_id: str,  # Plugin unique identifier
+    **kwargs  # Domain-specific job parameters
+) -> JobType:  # Created and started job
+    """
+    Start a new job.
+    
+    Note: Resource validation logic is removed since it depends on project-specific
+    resource management. Subclasses can override this method to add validation.
+    """
+```
+
+``` python
+@patch
+async def cancel_job(
+    self: BaseJobManager,
+    job_id: str  # ID of the job to cancel
+) -> bool:  # True if cancellation successful
+    """
+    Cancel a running job by terminating the worker process.
+    The worker will be automatically restarted based on restart policy.
+    """
+```
+
+``` python
+@patch
+def get_job(
+    self: BaseJobManager,
+    job_id: str  # Unique job identifier
+) -> Optional[JobType]:  # Job object or None
+    "Get a job by ID."
+```
+
+``` python
+@patch
+def get_all_jobs(
+    self: BaseJobManager
+) -> List[JobType]:  # List of all jobs
+    "Get all jobs."
+```
+
+``` python
+@patch
+def get_job_result(
+    self: BaseJobManager,
+    job_id: str  # Unique job identifier
+) -> Optional[Dict[str, Any]]:  # Job result or None
+    "Get job result."
+```
+
+``` python
+@patch
+def clear_completed_jobs(
+    self: BaseJobManager
+) -> int:  # Number of jobs cleared
+    "Clear completed, failed, and cancelled jobs."
+```
+
+``` python
+@patch
+async def broadcast_event(
+    self: BaseJobManager,
+    event_type: str,  # Event type identifier
+    data: Dict[str, Any]  # Event data payload
+)
+    "Broadcast an event to all connected SSE clients (requires event broadcaster)."
+```
+
+``` python
+@patch
+def check_streaming_support(
+    self: BaseJobManager,
+    plugin_id: str  # Plugin unique identifier
+) -> bool:  # True if streaming supported
+    "Check if a plugin supports streaming."
+```
+
+``` python
+@patch
+def shutdown(self: BaseJobManager):
+    """Shutdown the manager and cleanup resources."""
+    # Stop result monitor
+    self.monitor_running = False
+    if self.result_monitor_thread
+    "Shutdown the manager and cleanup resources."
+```
+
+#### Classes
+
+``` python
+@dataclass
+class BaseJob:
+    "Base class for all job types."
+    
+    id: str  # Unique job identifier
+    plugin_id: str  # Plugin identifier for this job
+    status: str = 'pending'  # Job status: pending, running, completed, failed, cancelled
+    created_at: str = field(...)  # ISO format timestamp
+    started_at: Optional[str]  # When job started executing
+    completed_at: Optional[str]  # When job finished
+    result: Optional[Dict[str, Any]]  # Job result data
+    error: Optional[str]  # Error message if failed
+    metadata: Dict[str, Any] = field(...)  # Additional job metadata
+    worker_pid: Optional[int]  # Process ID of worker handling this job
+```
+
+``` python
+class BaseJobManager:
+    def __init__(
+        self,
+        worker_type: str,  # Type identifier (e.g., "transcription", "llm", "image-gen")
+        category: Any,  # Plugin category this manager handles
+        supports_streaming: bool = False,  # Whether this manager supports streaming jobs
+        worker_config: Optional[WorkerConfig] = None,  # Worker configuration (uses defaults if None)
+        plugin_registry: Optional[PluginRegistryProtocol] = None,  # Optional plugin registry integration
+        resource_manager: Optional[ResourceManagerProtocol] = None,  # Optional resource manager integration
+        event_broadcaster: Optional[EventBroadcasterProtocol] = None,  # Optional SSE event broadcaster
+    )
+    """
+    Abstract base class for managing jobs using worker processes.
+    
+    Features:
+    - Jobs processed sequentially in subprocess
+    - Models loaded once and reused
+    - True cancellation via subprocess termination
+    - Automatic worker restart based on policy
+    - Isolated worker process avoids duplicating web app initialization
+    - Optional streaming support for incremental results
+    - Optional dependency injection for plugin registry, resource manager, and event broadcaster
+    """
+    
+    def __init__(
+            self,
+            worker_type: str,  # Type identifier (e.g., "transcription", "llm", "image-gen")
+            category: Any,  # Plugin category this manager handles
+            supports_streaming: bool = False,  # Whether this manager supports streaming jobs
+            worker_config: Optional[WorkerConfig] = None,  # Worker configuration (uses defaults if None)
+            plugin_registry: Optional[PluginRegistryProtocol] = None,  # Optional plugin registry integration
+            resource_manager: Optional[ResourceManagerProtocol] = None,  # Optional resource manager integration
+            event_broadcaster: Optional[EventBroadcasterProtocol] = None,  # Optional SSE event broadcaster
+        )
+        "Initialize the job manager.
+
+All integrations (plugin_registry, resource_manager, event_broadcaster) are optional.
+The manager will function without them, but features that depend on them will be disabled."
 ```
 
 ### config (`config.ipynb`)
