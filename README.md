@@ -37,9 +37,9 @@ graph LR
 
     core_adapters --> core_protocol
     core_worker --> core_protocol
+    managers_base --> extensions_protocols
     managers_base --> core_protocol
     managers_base --> core_config
-    managers_base --> extensions_protocols
 ```
 
 *5 cross-module dependencies detected*
