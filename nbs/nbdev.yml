@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "cjm-fasthtml-workers"
+  site-url: "https://cj-mills.github.io/cjm-fasthtml-workers"
+  description: "Background worker system for FastHTML with multiprocess job execution, cancellation support, and streaming capabilities."
+  repo-branch: main
+  repo-url: "https://github.com/cj-mills/cjm-fasthtml-workers"
