@@ -37,9 +37,9 @@ graph LR
 
     core_adapters --> core_protocol
     core_worker --> core_protocol
+    managers_base --> core_config
     managers_base --> extensions_protocols
     managers_base --> core_protocol
-    managers_base --> core_config
 ```
 
 *5 cross-module dependencies detected*
@@ -70,26 +70,17 @@ from cjm_fasthtml_workers.core.adapters import (
 
 ``` python
 def create_simple_adapter(
-    plugin_manager,  # The plugin manager instance to adapt
-    result_adapter: Optional[callable] = None  # Optional function to convert plugin results to dict
+    plugin_manager:Any,  # The plugin manager instance to adapt
+    result_adapter:Optional[callable]=None  # Optional function to convert plugin results to dict
 ) -> PluginManagerAdapter:  # Adapter that satisfies PluginManagerAdapter protocol
-    """
-    Create a simple adapter for a plugin manager.
-    
-    This is a convenience function that wraps a plugin manager object
-    to satisfy the PluginManagerAdapter protocol.
-    """
+    "Create a simple adapter for a plugin manager."
 ```
 
 ``` python
 def default_result_adapter(
-    result: Any  # Plugin execution result
+    result:Any  # Plugin execution result
 ) -> Dict[str, Any]:  # Dictionary with text and metadata
-    """
-    Default adapter for converting plugin results to dictionaries.
-    
-    Assumes result has 'text' and 'metadata' attributes.
-    """
+    "Default adapter for converting plugin results to dictionaries."
 ```
 
 ### base (`base.ipynb`)
@@ -113,114 +104,74 @@ from cjm_fasthtml_workers.managers.base import (
 @patch
 @abstractmethod
 def create_job(
-    self: BaseJobManager,
-    plugin_id: str,  # Plugin unique identifier
+    self:BaseJobManager,
+    plugin_id:str,  # Plugin unique identifier
     **kwargs  # Domain-specific job parameters
 ) -> JobType:  # Created job instance
-    """
-    Factory method for creating domain-specific jobs.
-    
-    Subclasses must implement this to create their specific job type.
-    """
+    "Factory method for creating domain-specific jobs."
 ```
 
 ``` python
 @patch
 @abstractmethod
 def get_worker_entry_point(
-    self: BaseJobManager
+    self:BaseJobManager
 ) -> Callable:  # Worker process entry point function
-    """
-    Return the worker process function for this manager.
-    
-    Subclasses must implement this to provide their worker entry point.
-    """
+    "Return the worker process function for this manager."
 ```
 
 ``` python
 @patch
 @abstractmethod
 def prepare_execute_request(
-    self: BaseJobManager,
-    job: JobType  # The job to prepare for execution
+    self:BaseJobManager,
+    job:JobType  # The job to prepare for execution
 ) -> Dict[str, Any]:  # Dictionary of parameters for the worker execute request
-    """
-    Convert job to worker execute request parameters.
-    
-    Subclasses must implement this to extract execution parameters from their job type.
-    """
+    "Convert job to worker execute request parameters."
 ```
 
 ``` python
 @patch
 @abstractmethod
 def extract_job_result(
-    self: BaseJobManager,
-    job: JobType,  # The job that was executed
-    result_data: Dict[str, Any]  # Raw result data from worker
+    self:BaseJobManager,
+    job:JobType,  # The job that was executed
+    result_data:Dict[str, Any]  # Raw result data from worker
 ) -> Dict[str, Any]:  # Formatted result for storage
-    """
-    Extract and format job result from worker response.
-    
-    Subclasses must implement this to format results for their job type.
-    """
+    "Extract and format job result from worker response."
 ```
 
 ``` python
 @patch
 def _extract_plugin_resource_identifier(
-    self: BaseJobManager,
-    config: Dict[str, Any]  # Plugin configuration dictionary
+    self:BaseJobManager,
+    config:Dict[str, Any]  # Plugin configuration dictionary
 ) -> str:  # Plugin resource identifier string
-    """
-    Extract plugin resource identifier from plugin configuration.
-    
-    Override this method in subclasses to customize plugin resource identifier extraction
-    based on your plugin's configuration structure.
-    """
+    "Extract plugin resource identifier from plugin configuration."
 ```
 
 ``` python
 @patch
 async def _validate_resources(
-    self: BaseJobManager,
-    plugin_id: str,  # Plugin unique identifier
-    plugin_config: Dict[str, Any]  # Plugin configuration
+    self:BaseJobManager,
+    plugin_id:str,  # Plugin unique identifier
+    plugin_config:Dict[str, Any]  # Plugin configuration
 ) -> Optional[str]:  # Error message if validation fails, None if successful
-    """
-    Validate resources before starting a job.
-    
-    Override this method in subclasses to implement custom resource validation logic,
-    such as checking GPU availability, memory requirements, or concurrent job limits.
-    
-    This hook is called by start_job before creating and executing a job. If validation
-    fails, start_job will raise an exception with the returned error message.
-    """
+    "Validate resources before starting a job."
 ```
 
 ``` python
 @patch
 def _on_job_completed(
-    self: BaseJobManager,
-    job_id: str  # ID of the completed job
+    self:BaseJobManager,
+    job_id:str  # ID of the completed job
 ) -> None
-    """
-    Hook called when a job completes successfully.
-    
-    Override this method in subclasses to implement custom post-completion logic,
-    such as saving results to disk, sending notifications, or triggering follow-up tasks.
-    
-    This hook is called automatically by _handle_job_result after a job completes
-    successfully (but not when a job fails or is cancelled).
-    
-    Note: This is a synchronous method called from the result monitor thread.
-    If you need async operations, use asyncio.create_task() or similar.
-    """
+    "Hook called when a job completes successfully."
 ```
 
 ``` python
 @patch
-def _start_worker(self: BaseJobManager):
+def _start_worker(self:BaseJobManager):
     """Start the worker process and result monitor."""
     if self.worker_process and self.worker_process.is_alive()
     "Start the worker process and result monitor."
@@ -228,7 +179,7 @@ def _start_worker(self: BaseJobManager):
 
 ``` python
 @patch
-def _init_worker(self: BaseJobManager):
+def _init_worker(self:BaseJobManager):
     """Send initialization message to worker with plugin configurations."""
     # Only send plugin configs if plugin registry is available
     plugin_configs = {}
@@ -239,7 +190,7 @@ def _init_worker(self: BaseJobManager):
 
 ``` python
 @patch
-def _restart_worker(self: BaseJobManager):
+def _restart_worker(self:BaseJobManager):
     """Restart the worker process after an error or cancellation."""
     # Track restart
     self.restart_count += 1
@@ -252,7 +203,7 @@ def _restart_worker(self: BaseJobManager):
 
 ``` python
 @patch
-def _monitor_results(self: BaseJobManager):
+def _monitor_results(self:BaseJobManager):
     """Monitor the result queue in a background thread."""
     while self.monitor_running
     "Monitor the result queue in a background thread."
@@ -260,29 +211,25 @@ def _monitor_results(self: BaseJobManager):
 
 ``` python
 @patch
-def _handle_job_result(self: BaseJobManager, result: Dict[str, Any]):
-    """Handle a job result from the worker."""
-    job_id = result['job_id']
-
-    if job_id not in self.jobs
+def _handle_job_result(
+    self:BaseJobManager, 
+    result:Dict[str, Any]  # Result data from worker
+)
     "Handle a job result from the worker."
 ```
 
 ``` python
 @patch
-def _handle_stream_chunk(self: BaseJobManager, chunk_data: Dict[str, Any]):
-    """Handle a streaming chunk from the worker."""
-    job_id = chunk_data.get('job_id')
-    chunk = chunk_data.get('chunk', '')
-    is_final = chunk_data.get('is_final', False)
-
-    if job_id not in self._stream_buffers
+def _handle_stream_chunk(
+    self:BaseJobManager, 
+    chunk_data:Dict[str, Any]  # Chunk data from worker
+)
     "Handle a streaming chunk from the worker."
 ```
 
 ``` python
 @patch
-def _handle_worker_error(self: BaseJobManager):
+def _handle_worker_error(self:BaseJobManager):
     """Handle worker fatal error based on restart policy."""
     policy = self.worker_config.restart_policy
 
@@ -293,8 +240,8 @@ def _handle_worker_error(self: BaseJobManager):
 ``` python
 @patch
 def get_plugin_name(
-    self: BaseJobManager,
-    plugin_id: str  # Plugin unique identifier
+    self:BaseJobManager,
+    plugin_id:str  # Plugin unique identifier
 ) -> Optional[str]:  # Plugin name or None
     "Get plugin name from plugin ID (requires plugin registry)."
 ```
@@ -302,8 +249,8 @@ def get_plugin_name(
 ``` python
 @patch
 async def unload_plugin(
-    self: BaseJobManager,
-    plugin_name: str  # Name of the plugin to unload
+    self:BaseJobManager,
+    plugin_name:str  # Name of the plugin to unload
 ) -> bool:  # True if successful, False otherwise
     "Unload a plugin from the worker to free resources."
 ```
@@ -311,9 +258,9 @@ async def unload_plugin(
 ``` python
 @patch
 async def reload_plugin(
-    self: BaseJobManager,
-    plugin_name: str,  # Name of the plugin to reload
-    config: Dict[str, Any]  # New configuration
+    self:BaseJobManager,
+    plugin_name:str,  # Name of the plugin to reload
+    config:Dict[str, Any]  # New configuration
 ) -> bool:  # True if successful, False otherwise
     "Reload a plugin with new configuration."
 ```
@@ -321,35 +268,27 @@ async def reload_plugin(
 ``` python
 @patch
 async def start_job(
-    self: BaseJobManager,
-    plugin_id: str,  # Plugin unique identifier
+    self:BaseJobManager,
+    plugin_id:str,  # Plugin unique identifier
     **kwargs  # Domain-specific job parameters
 ) -> JobType:  # Created and started job
-    """
-    Start a new job.
-    
-    Calls the _validate_resources hook before starting the job. Override that
-    method in subclasses to add custom resource validation logic.
-    """
+    "Start a new job."
 ```
 
 ``` python
 @patch
 async def cancel_job(
-    self: BaseJobManager,
-    job_id: str  # ID of the job to cancel
+    self:BaseJobManager,
+    job_id:str  # ID of the job to cancel
 ) -> bool:  # True if cancellation successful
-    """
-    Cancel a running job by terminating the worker process.
-    The worker will be automatically restarted based on restart policy.
-    """
+    "Cancel a running job by terminating the worker process."
 ```
 
 ``` python
 @patch
 def get_job(
-    self: BaseJobManager,
-    job_id: str  # Unique job identifier
+    self:BaseJobManager,
+    job_id:str  # Unique job identifier
 ) -> Optional[JobType]:  # Job object or None
     "Get a job by ID."
 ```
@@ -357,7 +296,7 @@ def get_job(
 ``` python
 @patch
 def get_all_jobs(
-    self: BaseJobManager
+    self:BaseJobManager
 ) -> List[JobType]:  # List of all jobs
     "Get all jobs."
 ```
@@ -365,8 +304,8 @@ def get_all_jobs(
 ``` python
 @patch
 def get_job_result(
-    self: BaseJobManager,
-    job_id: str  # Unique job identifier
+    self:BaseJobManager,
+    job_id:str  # Unique job identifier
 ) -> Optional[Dict[str, Any]]:  # Job result or None
     "Get job result."
 ```
@@ -374,7 +313,7 @@ def get_job_result(
 ``` python
 @patch
 def clear_completed_jobs(
-    self: BaseJobManager
+    self:BaseJobManager
 ) -> int:  # Number of jobs cleared
     "Clear completed, failed, and cancelled jobs."
 ```
@@ -382,9 +321,9 @@ def clear_completed_jobs(
 ``` python
 @patch
 async def broadcast_event(
-    self: BaseJobManager,
-    event_type: str,  # Event type identifier
-    data: Dict[str, Any]  # Event data payload
+    self:BaseJobManager,
+    event_type:str,  # Event type identifier
+    data:Dict[str, Any]  # Event data payload
 )
     "Broadcast an event to all connected SSE clients (requires event broadcaster)."
 ```
@@ -392,15 +331,15 @@ async def broadcast_event(
 ``` python
 @patch
 def check_streaming_support(
-    self: BaseJobManager,
-    plugin_id: str  # Plugin unique identifier
+    self:BaseJobManager,
+    plugin_id:str  # Plugin unique identifier
 ) -> bool:  # True if streaming supported
     "Check if a plugin supports streaming."
 ```
 
 ``` python
 @patch
-def shutdown(self: BaseJobManager):
+def shutdown(self:BaseJobManager):
     """Shutdown the manager and cleanup resources."""
     # Stop result monitor
     self.monitor_running = False
@@ -431,13 +370,13 @@ class BaseJob:
 class BaseJobManager:
     def __init__(
         self,
-        worker_type: str,  # Type identifier (e.g., "transcription", "llm", "image-gen")
-        category: Any,  # Plugin category this manager handles
-        supports_streaming: bool = False,  # Whether this manager supports streaming jobs
-        worker_config: Optional[WorkerConfig] = None,  # Worker configuration (uses defaults if None)
-        plugin_registry: Optional[PluginRegistryProtocol] = None,  # Optional plugin registry integration
-        resource_manager: Optional[ResourceManagerProtocol] = None,  # Optional resource manager integration
-        event_broadcaster: Optional[EventBroadcasterProtocol] = None,  # Optional SSE event broadcaster
+        worker_type:str,  # Type identifier (e.g., "transcription", "llm", "image-gen")
+        category:Any,  # Plugin category this manager handles
+        supports_streaming:bool=False,  # Whether this manager supports streaming jobs
+        worker_config:Optional[WorkerConfig]=None,  # Worker configuration (uses defaults if None)
+        plugin_registry:Optional[PluginRegistryProtocol]=None,  # Optional plugin registry integration
+        resource_manager:Optional[ResourceManagerProtocol]=None,  # Optional resource manager integration
+        event_broadcaster:Optional[EventBroadcasterProtocol]=None,  # Optional SSE event broadcaster
     )
     """
     Abstract base class for managing jobs using worker processes.
@@ -454,18 +393,15 @@ class BaseJobManager:
     
     def __init__(
             self,
-            worker_type: str,  # Type identifier (e.g., "transcription", "llm", "image-gen")
-            category: Any,  # Plugin category this manager handles
-            supports_streaming: bool = False,  # Whether this manager supports streaming jobs
-            worker_config: Optional[WorkerConfig] = None,  # Worker configuration (uses defaults if None)
-            plugin_registry: Optional[PluginRegistryProtocol] = None,  # Optional plugin registry integration
-            resource_manager: Optional[ResourceManagerProtocol] = None,  # Optional resource manager integration
-            event_broadcaster: Optional[EventBroadcasterProtocol] = None,  # Optional SSE event broadcaster
+            worker_type:str,  # Type identifier (e.g., "transcription", "llm", "image-gen")
+            category:Any,  # Plugin category this manager handles
+            supports_streaming:bool=False,  # Whether this manager supports streaming jobs
+            worker_config:Optional[WorkerConfig]=None,  # Worker configuration (uses defaults if None)
+            plugin_registry:Optional[PluginRegistryProtocol]=None,  # Optional plugin registry integration
+            resource_manager:Optional[ResourceManagerProtocol]=None,  # Optional resource manager integration
+            event_broadcaster:Optional[EventBroadcasterProtocol]=None,  # Optional SSE event broadcaster
         )
-        "Initialize the job manager.
-
-All integrations (plugin_registry, resource_manager, event_broadcaster) are optional.
-The manager will function without them, but features that depend on them will be disabled."
+        "Initialize the job manager."
 ```
 
 ### config (`config.ipynb`)
@@ -626,124 +562,56 @@ class PluginManagerAdapter(Protocol):
     explicitly inherit from this, they just need to implement these methods.
     """
     
-    def discover_plugins(self) -> list:
-            """
-            Discover available plugins.
-    
-            Returns:
-                List of plugin metadata/data objects
-            """
+    def discover_plugins(self) -> list:  # List of plugin metadata/data objects
+            """Discover available plugins."""
             ...
     
-        def load_plugin(self, plugin_data: Any, config: Dict[str, Any]) -> None
-        "Discover available plugins.
-
-Returns:
-    List of plugin metadata/data objects"
+        def load_plugin(
+            self, 
+            plugin_data:Any,  # Plugin metadata/data from discovery
+            config:Dict[str, Any]  # Plugin configuration dictionary
+        ) -> None
+        "Discover available plugins."
     
-    def load_plugin(self, plugin_data: Any, config: Dict[str, Any]) -> None:
-            """
-            Load a plugin with configuration.
+    def load_plugin(
+            self, 
+            plugin_data:Any,  # Plugin metadata/data from discovery
+            config:Dict[str, Any]  # Plugin configuration dictionary
+        ) -> None
+        "Load a plugin with configuration."
     
-            Args:
-                plugin_data: Plugin metadata/data from discovery
-                config: Plugin configuration dictionary
-            """
-            ...
+    def execute_plugin(
+            self, 
+            plugin_name:str,  # Name of the plugin to execute
+            **params  # Plugin-specific parameters
+        ) -> Any:  # Plugin execution result
+        "Execute a plugin with given parameters."
     
-        def execute_plugin(self, plugin_name: str, **params) -> Any
-        "Load a plugin with configuration.
-
-Args:
-    plugin_data: Plugin metadata/data from discovery
-    config: Plugin configuration dictionary"
+    def execute_plugin_stream(
+            self, 
+            plugin_name:str,  # Name of the plugin to execute
+            **params  # Plugin-specific parameters
+        ) -> Iterator[str]:  # String chunks from plugin execution
+        "Execute a plugin with streaming output."
     
-    def execute_plugin(self, plugin_name: str, **params) -> Any:
-            """
-            Execute a plugin with given parameters.
+    def reload_plugin(
+            self, 
+            plugin_name:str,  # Name of the plugin to reload
+            config:Optional[Dict[str, Any]]=None  # New configuration (None to unload)
+        ) -> None
+        "Reload a plugin with new configuration."
     
-            Args:
-                plugin_name: Name of the plugin to execute
-                **params: Plugin-specific parameters
+    def unload_plugin(
+            self, 
+            plugin_name:str  # Name of the plugin to unload
+        ) -> None
+        "Unload a plugin to free resources."
     
-            Returns:
-                Plugin execution result
-            """
-            ...
-    
-        def execute_plugin_stream(self, plugin_name: str, **params) -> Iterator[str]
-        "Execute a plugin with given parameters.
-
-Args:
-    plugin_name: Name of the plugin to execute
-    **params: Plugin-specific parameters
-
-Returns:
-    Plugin execution result"
-    
-    def execute_plugin_stream(self, plugin_name: str, **params) -> Iterator[str]:
-            """
-            Execute a plugin with streaming output.
-    
-            Args:
-                plugin_name: Name of the plugin to execute
-                **params: Plugin-specific parameters
-    
-            Yields:
-                String chunks from plugin execution
-            """
-            ...
-    
-        def reload_plugin(self, plugin_name: str, config: Optional[Dict[str, Any]] = None) -> None
-        "Execute a plugin with streaming output.
-
-Args:
-    plugin_name: Name of the plugin to execute
-    **params: Plugin-specific parameters
-
-Yields:
-    String chunks from plugin execution"
-    
-    def reload_plugin(self, plugin_name: str, config: Optional[Dict[str, Any]] = None) -> None:
-            """
-            Reload a plugin with new configuration.
-    
-            Args:
-                plugin_name: Name of the plugin to reload
-                config: New configuration (None to unload)
-            """
-            ...
-    
-        def unload_plugin(self, plugin_name: str) -> None
-        "Reload a plugin with new configuration.
-
-Args:
-    plugin_name: Name of the plugin to reload
-    config: New configuration (None to unload)"
-    
-    def unload_plugin(self, plugin_name: str) -> None:
-            """
-            Unload a plugin to free resources.
-    
-            Args:
-                plugin_name: Name of the plugin to unload
-            """
-            ...
-    
-        def check_streaming_support(self, plugin_name: str) -> bool
-        "Unload a plugin to free resources.
-
-Args:
-    plugin_name: Name of the plugin to unload"
-    
-    def check_streaming_support(self, plugin_name: str) -> bool
-        "Check if a plugin supports streaming execution.
-
-Args:
-    plugin_name: Name of the plugin to check
-
-Returns:
-    True if plugin supports streaming"
+    def check_streaming_support(
+            self, 
+            plugin_name:str  # Name of the plugin to check
+        ) -> bool:  # True if plugin supports streaming
+        "Check if a plugin supports streaming execution."
 ```
 
 ### protocols (`protocols.ipynb`)
@@ -767,56 +635,23 @@ from cjm_fasthtml_workers.extensions.protocols import (
 class PluginRegistryProtocol(Protocol):
     "Protocol for plugin registry integration."
     
-    def get_plugins_by_category(self, category: Any) -> list:
-            """
-            Get all plugins in a specific category.
-            
-            Args:
-                category: Plugin category (can be enum, string, etc.)
-                
-            Returns:
-                List of plugin metadata objects
-            """
-            ...
-        
-        def get_plugin(self, plugin_id: str) -> Any
-        "Get all plugins in a specific category.
-
-Args:
-    category: Plugin category (can be enum, string, etc.)
+    def get_plugins_by_category(
+            self, 
+            category:Any  # Plugin category (can be enum, string, etc.)
+        ) -> list:  # List of plugin metadata objects
+        "Get all plugins in a specific category."
     
-Returns:
-    List of plugin metadata objects"
+    def get_plugin(
+            self, 
+            plugin_id:str  # Unique plugin identifier
+        ) -> Any:  # Plugin metadata object or None
+        "Get a specific plugin by ID."
     
-    def get_plugin(self, plugin_id: str) -> Any:
-            """
-            Get a specific plugin by ID.
-            
-            Args:
-                plugin_id: Unique plugin identifier
-                
-            Returns:
-                Plugin metadata object or None
-            """
-            ...
-        
-        def load_plugin_config(self, plugin_id: str) -> Dict[str, Any]
-        "Get a specific plugin by ID.
-
-Args:
-    plugin_id: Unique plugin identifier
-    
-Returns:
-    Plugin metadata object or None"
-    
-    def load_plugin_config(self, plugin_id: str) -> Dict[str, Any]
-        "Load configuration for a plugin.
-
-Args:
-    plugin_id: Unique plugin identifier
-    
-Returns:
-    Plugin configuration dictionary"
+    def load_plugin_config(
+            self, 
+            plugin_id:str  # Unique plugin identifier
+        ) -> Dict[str, Any]:  # Plugin configuration dictionary
+        "Load configuration for a plugin."
 ```
 
 ``` python
@@ -825,63 +660,28 @@ class ResourceManagerProtocol(Protocol):
     
     def register_worker(
             self,
-            pid: int,  # Worker process ID
-            worker_type: str  # Type of worker (e.g., 'transcription', 'llm')
+            pid:int,  # Worker process ID
+            worker_type:str  # Type of worker (e.g., 'transcription', 'llm')
         ) -> None
-        "Register a new worker process.
-
-Args:
-    pid: Process ID of the worker
-    worker_type: Type identifier for the worker"
+        "Register a new worker process."
     
-    def unregister_worker(self, pid: int) -> None:
-            """
-            Unregister a worker process.
-            
-            Args:
-                pid: Process ID of the worker to unregister
-            """
-            ...
-        
-        def update_worker_state(
-            self,
-            pid: int,  # Worker process ID
-            status: Optional[str] = None,  # Worker status: 'idle', 'running', etc.
-            job_id: Optional[str] = None,  # Current job ID (None if idle)
-            plugin_name: Optional[str] = None,  # Currently loaded plugin name
-            plugin_id: Optional[str] = None,  # Currently loaded plugin ID
-            loaded_plugin_resource: Optional[str] = None,  # Currently loaded plugin resource identifier
-            config: Optional[Dict[str, Any]] = None,  # Current plugin configuration
+    def unregister_worker(
+            self, 
+            pid:int  # Process ID of the worker to unregister
         ) -> None
-        "Unregister a worker process.
-
-Args:
-    pid: Process ID of the worker to unregister"
+        "Unregister a worker process."
     
     def update_worker_state(
             self,
-            pid: int,  # Worker process ID
-            status: Optional[str] = None,  # Worker status: 'idle', 'running', etc.
-            job_id: Optional[str] = None,  # Current job ID (None if idle)
-            plugin_name: Optional[str] = None,  # Currently loaded plugin name
-            plugin_id: Optional[str] = None,  # Currently loaded plugin ID
-            loaded_plugin_resource: Optional[str] = None,  # Currently loaded plugin resource identifier
-            config: Optional[Dict[str, Any]] = None,  # Current plugin configuration
+            pid:int,  # Worker process ID
+            status:Optional[str]=None,  # Worker status: 'idle', 'running', etc.
+            job_id:Optional[str]=None,  # Current job ID (None if idle)
+            plugin_name:Optional[str]=None,  # Currently loaded plugin name
+            plugin_id:Optional[str]=None,  # Currently loaded plugin ID
+            loaded_plugin_resource:Optional[str]=None,  # Currently loaded plugin resource identifier
+            config:Optional[Dict[str, Any]]=None,  # Current plugin configuration
         ) -> None
-        "Update worker state information.
-
-This method uses optional parameters to allow partial updates.
-Only provided parameters will be updated; None values can be used
-to clear state (e.g., when unloading a plugin).
-
-Args:
-    pid: Process ID of the worker
-    status: Worker status (e.g., 'idle', 'running')
-    job_id: Current job identifier (None if no job running)
-    plugin_name: Name of currently loaded plugin
-    plugin_id: Unique identifier of currently loaded plugin
-    loaded_plugin_resource: Identifier of currently loaded plugin resource
-    config: Current plugin configuration dictionary"
+        "Update worker state information."
 ```
 
 ``` python
@@ -890,14 +690,10 @@ class EventBroadcasterProtocol(Protocol):
     
     async def broadcast(
             self,
-            event_type: str,  # Event type identifier
-            data: Dict[str, Any]  # Event data payload
+            event_type:str,  # Event type identifier
+            data:Dict[str, Any]  # Event data payload
         ) -> None
-        "Broadcast an event to all connected clients.
-
-Args:
-    event_type: Type of event (e.g., 'job:started', 'job:completed')
-    data: Event data to broadcast"
+        "Broadcast an event to all connected clients."
 ```
 
 ### worker (`worker.ipynb`)
@@ -917,18 +713,12 @@ from cjm_fasthtml_workers.core.worker import (
 
 ``` python
 def base_worker_process(
-    request_queue: multiprocessing.Queue,  # Queue for receiving job requests from parent
-    result_queue: multiprocessing.Queue,  # Queue for sending job results back to parent
-    response_queue: multiprocessing.Queue,  # Queue for sending command responses back to parent
-    plugin_manager_factory: Callable[[], PluginManagerAdapter],  # Factory function that creates a plugin manager instance
-    result_adapter: Optional[Callable[[Any], Dict[str, Any]]] = None,  # Optional function to adapt plugin results to dict format
-    supports_streaming: bool = False  # Whether this worker supports streaming execution
+    request_queue:multiprocessing.Queue,  # Queue for receiving job requests from parent
+    result_queue:multiprocessing.Queue,  # Queue for sending job results back to parent
+    response_queue:multiprocessing.Queue,  # Queue for sending command responses back to parent
+    plugin_manager_factory:Callable[[], PluginManagerAdapter],  # Factory function that creates a plugin manager instance
+    result_adapter:Optional[Callable[[Any], Dict[str, Any]]]=None,  # Optional function to adapt plugin results to dict format
+    supports_streaming:bool=False  # Whether this worker supports streaming execution
 )
-    """
-    Generic long-lived worker process that handles job execution.
-    
-    The worker runs in an isolated subprocess, receiving jobs from the parent process
-    via queues and sending results back. It manages plugin lifecycle and can be 
-    terminated for cancellation.
-    """
+    "Generic long-lived worker process that handles job execution."
 ```

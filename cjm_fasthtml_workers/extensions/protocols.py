@@ -12,40 +12,25 @@ from typing import Dict, Any, Protocol, Optional, List
 class PluginRegistryProtocol(Protocol):
     """Protocol for plugin registry integration."""
     
-    def get_plugins_by_category(self, category: Any) -> list:
-        """
-        Get all plugins in a specific category.
-        
-        Args:
-            category: Plugin category (can be enum, string, etc.)
-            
-        Returns:
-            List of plugin metadata objects
-        """
+    def get_plugins_by_category(
+        self, 
+        category:Any  # Plugin category (can be enum, string, etc.)
+    ) -> list:  # List of plugin metadata objects
+        """Get all plugins in a specific category."""
         ...
     
-    def get_plugin(self, plugin_id: str) -> Any:
-        """
-        Get a specific plugin by ID.
-        
-        Args:
-            plugin_id: Unique plugin identifier
-            
-        Returns:
-            Plugin metadata object or None
-        """
+    def get_plugin(
+        self, 
+        plugin_id:str  # Unique plugin identifier
+    ) -> Any:  # Plugin metadata object or None
+        """Get a specific plugin by ID."""
         ...
     
-    def load_plugin_config(self, plugin_id: str) -> Dict[str, Any]:
-        """
-        Load configuration for a plugin.
-        
-        Args:
-            plugin_id: Unique plugin identifier
-            
-        Returns:
-            Plugin configuration dictionary
-        """
+    def load_plugin_config(
+        self, 
+        plugin_id:str  # Unique plugin identifier
+    ) -> Dict[str, Any]:  # Plugin configuration dictionary
+        """Load configuration for a plugin."""
         ...
 
 # %% ../../nbs/extensions/protocols.ipynb 8
@@ -54,53 +39,30 @@ class ResourceManagerProtocol(Protocol):
     
     def register_worker(
         self,
-        pid: int,  # Worker process ID
-        worker_type: str  # Type of worker (e.g., 'transcription', 'llm')
+        pid:int,  # Worker process ID
+        worker_type:str  # Type of worker (e.g., 'transcription', 'llm')
     ) -> None:
-        """
-        Register a new worker process.
-        
-        Args:
-            pid: Process ID of the worker
-            worker_type: Type identifier for the worker
-        """
+        """Register a new worker process."""
         ...
     
-    def unregister_worker(self, pid: int) -> None:
-        """
-        Unregister a worker process.
-        
-        Args:
-            pid: Process ID of the worker to unregister
-        """
+    def unregister_worker(
+        self, 
+        pid:int  # Process ID of the worker to unregister
+    ) -> None:
+        """Unregister a worker process."""
         ...
     
     def update_worker_state(
         self,
-        pid: int,  # Worker process ID
-        status: Optional[str] = None,  # Worker status: 'idle', 'running', etc.
-        job_id: Optional[str] = None,  # Current job ID (None if idle)
-        plugin_name: Optional[str] = None,  # Currently loaded plugin name
-        plugin_id: Optional[str] = None,  # Currently loaded plugin ID
-        loaded_plugin_resource: Optional[str] = None,  # Currently loaded plugin resource identifier
-        config: Optional[Dict[str, Any]] = None,  # Current plugin configuration
+        pid:int,  # Worker process ID
+        status:Optional[str]=None,  # Worker status: 'idle', 'running', etc.
+        job_id:Optional[str]=None,  # Current job ID (None if idle)
+        plugin_name:Optional[str]=None,  # Currently loaded plugin name
+        plugin_id:Optional[str]=None,  # Currently loaded plugin ID
+        loaded_plugin_resource:Optional[str]=None,  # Currently loaded plugin resource identifier
+        config:Optional[Dict[str, Any]]=None,  # Current plugin configuration
     ) -> None:
-        """
-        Update worker state information.
-        
-        This method uses optional parameters to allow partial updates.
-        Only provided parameters will be updated; None values can be used
-        to clear state (e.g., when unloading a plugin).
-        
-        Args:
-            pid: Process ID of the worker
-            status: Worker status (e.g., 'idle', 'running')
-            job_id: Current job identifier (None if no job running)
-            plugin_name: Name of currently loaded plugin
-            plugin_id: Unique identifier of currently loaded plugin
-            loaded_plugin_resource: Identifier of currently loaded plugin resource
-            config: Current plugin configuration dictionary
-        """
+        """Update worker state information."""
         ...
 
 # %% ../../nbs/extensions/protocols.ipynb 10
@@ -109,14 +71,8 @@ class EventBroadcasterProtocol(Protocol):
     
     async def broadcast(
         self,
-        event_type: str,  # Event type identifier
-        data: Dict[str, Any]  # Event data payload
+        event_type:str,  # Event type identifier
+        data:Dict[str, Any]  # Event data payload
     ) -> None:
-        """
-        Broadcast an event to all connected clients.
-        
-        Args:
-            event_type: Type of event (e.g., 'job:started', 'job:completed')
-            data: Event data to broadcast
-        """
+        """Broadcast an event to all connected clients."""
         ...

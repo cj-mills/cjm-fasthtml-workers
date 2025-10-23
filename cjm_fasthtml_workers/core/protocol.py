@@ -14,22 +14,22 @@ from dataclasses import dataclass
 # %% ../../nbs/core/protocol.ipynb 6
 class WorkerRequestType(Enum):
     """Types of requests sent to worker process."""
-    INIT = "init"
-    EXECUTE = "execute"
-    RELOAD = "reload"
-    UNLOAD = "unload"
-    GET_STATE = "get_state"
-    STOP = "stop"
+    INIT = "init"  # Initialize worker with plugin configurations
+    EXECUTE = "execute"  # Execute a job with specified plugin and parameters
+    RELOAD = "reload"  # Reload a plugin with new configuration
+    UNLOAD = "unload"  # Unload a plugin to free resources
+    GET_STATE = "get_state"  # Query current worker state
+    STOP = "stop"  # Gracefully shutdown the worker
 
 # %% ../../nbs/core/protocol.ipynb 7
 class WorkerResponseType(Enum):
     """Types of responses from worker process."""
-    READY = "ready"
-    RESULT = "result"
-    STREAM_CHUNK = "stream_chunk"
-    RESPONSE = "response"
-    STATE = "state"
-    ERROR = "error"
+    READY = "ready"  # Worker initialized successfully
+    RESULT = "result"  # Job execution completed (success or error)
+    STREAM_CHUNK = "stream_chunk"  # Streaming output chunk
+    RESPONSE = "response"  # Synchronous response to commands
+    STATE = "state"  # Worker state information
+    ERROR = "error"  # Fatal worker error
 
 # %% ../../nbs/core/protocol.ipynb 10
 @dataclass
@@ -123,78 +123,52 @@ class PluginManagerAdapter(Protocol):
     explicitly inherit from this, they just need to implement these methods.
     """
 
-    def discover_plugins(self) -> list:
-        """
-        Discover available plugins.
-
-        Returns:
-            List of plugin metadata/data objects
-        """
+    def discover_plugins(self) -> list:  # List of plugin metadata/data objects
+        """Discover available plugins."""
         ...
 
-    def load_plugin(self, plugin_data: Any, config: Dict[str, Any]) -> None:
-        """
-        Load a plugin with configuration.
-
-        Args:
-            plugin_data: Plugin metadata/data from discovery
-            config: Plugin configuration dictionary
-        """
+    def load_plugin(
+        self, 
+        plugin_data:Any,  # Plugin metadata/data from discovery
+        config:Dict[str, Any]  # Plugin configuration dictionary
+    ) -> None:
+        """Load a plugin with configuration."""
         ...
 
-    def execute_plugin(self, plugin_name: str, **params) -> Any:
-        """
-        Execute a plugin with given parameters.
-
-        Args:
-            plugin_name: Name of the plugin to execute
-            **params: Plugin-specific parameters
-
-        Returns:
-            Plugin execution result
-        """
+    def execute_plugin(
+        self, 
+        plugin_name:str,  # Name of the plugin to execute
+        **params  # Plugin-specific parameters
+    ) -> Any:  # Plugin execution result
+        """Execute a plugin with given parameters."""
         ...
 
-    def execute_plugin_stream(self, plugin_name: str, **params) -> Iterator[str]:
-        """
-        Execute a plugin with streaming output.
-
-        Args:
-            plugin_name: Name of the plugin to execute
-            **params: Plugin-specific parameters
-
-        Yields:
-            String chunks from plugin execution
-        """
+    def execute_plugin_stream(
+        self, 
+        plugin_name:str,  # Name of the plugin to execute
+        **params  # Plugin-specific parameters
+    ) -> Iterator[str]:  # String chunks from plugin execution
+        """Execute a plugin with streaming output."""
         ...
 
-    def reload_plugin(self, plugin_name: str, config: Optional[Dict[str, Any]] = None) -> None:
-        """
-        Reload a plugin with new configuration.
-
-        Args:
-            plugin_name: Name of the plugin to reload
-            config: New configuration (None to unload)
-        """
+    def reload_plugin(
+        self, 
+        plugin_name:str,  # Name of the plugin to reload
+        config:Optional[Dict[str, Any]]=None  # New configuration (None to unload)
+    ) -> None:
+        """Reload a plugin with new configuration."""
         ...
 
-    def unload_plugin(self, plugin_name: str) -> None:
-        """
-        Unload a plugin to free resources.
-
-        Args:
-            plugin_name: Name of the plugin to unload
-        """
+    def unload_plugin(
+        self, 
+        plugin_name:str  # Name of the plugin to unload
+    ) -> None:
+        """Unload a plugin to free resources."""
         ...
 
-    def check_streaming_support(self, plugin_name: str) -> bool:
-        """
-        Check if a plugin supports streaming execution.
-
-        Args:
-            plugin_name: Name of the plugin to check
-
-        Returns:
-            True if plugin supports streaming
-        """
+    def check_streaming_support(
+        self, 
+        plugin_name:str  # Name of the plugin to check
+    ) -> bool:  # True if plugin supports streaming
+        """Check if a plugin supports streaming execution."""
         ...

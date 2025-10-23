@@ -11,15 +11,10 @@ from .protocol import PluginManagerAdapter
 
 # %% ../../nbs/core/adapters.ipynb 5
 def create_simple_adapter(
-    plugin_manager,  # The plugin manager instance to adapt
-    result_adapter: Optional[callable] = None  # Optional function to convert plugin results to dict
+    plugin_manager:Any,  # The plugin manager instance to adapt
+    result_adapter:Optional[callable]=None  # Optional function to convert plugin results to dict
 ) -> PluginManagerAdapter:  # Adapter that satisfies PluginManagerAdapter protocol
-    """
-    Create a simple adapter for a plugin manager.
-
-    This is a convenience function that wraps a plugin manager object
-    to satisfy the PluginManagerAdapter protocol.
-    """
+    """Create a simple adapter for a plugin manager."""
 
     class SimpleAdapter:
         """Simple wrapper adapter for plugin managers."""
@@ -66,13 +61,9 @@ def create_simple_adapter(
 
 # %% ../../nbs/core/adapters.ipynb 12
 def default_result_adapter(
-    result: Any  # Plugin execution result
+    result:Any  # Plugin execution result
 ) -> Dict[str, Any]:  # Dictionary with text and metadata
-    """
-    Default adapter for converting plugin results to dictionaries.
-
-    Assumes result has 'text' and 'metadata' attributes.
-    """
+    """Default adapter for converting plugin results to dictionaries."""
     if isinstance(result, dict):
         return result
 

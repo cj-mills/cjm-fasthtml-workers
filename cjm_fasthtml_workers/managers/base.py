@@ -72,20 +72,15 @@ class BaseJobManager(ABC, Generic[JobType]):
 
     def __init__(
         self,
-        worker_type: str,  # Type identifier (e.g., "transcription", "llm", "image-gen")
-        category: Any,  # Plugin category this manager handles
-        supports_streaming: bool = False,  # Whether this manager supports streaming jobs
-        worker_config: Optional[WorkerConfig] = None,  # Worker configuration (uses defaults if None)
-        plugin_registry: Optional[PluginRegistryProtocol] = None,  # Optional plugin registry integration
-        resource_manager: Optional[ResourceManagerProtocol] = None,  # Optional resource manager integration
-        event_broadcaster: Optional[EventBroadcasterProtocol] = None,  # Optional SSE event broadcaster
+        worker_type:str,  # Type identifier (e.g., "transcription", "llm", "image-gen")
+        category:Any,  # Plugin category this manager handles
+        supports_streaming:bool=False,  # Whether this manager supports streaming jobs
+        worker_config:Optional[WorkerConfig]=None,  # Worker configuration (uses defaults if None)
+        plugin_registry:Optional[PluginRegistryProtocol]=None,  # Optional plugin registry integration
+        resource_manager:Optional[ResourceManagerProtocol]=None,  # Optional resource manager integration
+        event_broadcaster:Optional[EventBroadcasterProtocol]=None,  # Optional SSE event broadcaster
     ):
-        """
-        Initialize the job manager.
-
-        All integrations (plugin_registry, resource_manager, event_broadcaster) are optional.
-        The manager will function without them, but features that depend on them will be disabled.
-        """
+        """Initialize the job manager."""
         self.worker_type = worker_type
         self.category = category
         self.supports_streaming = supports_streaming
@@ -129,71 +124,50 @@ class BaseJobManager(ABC, Generic[JobType]):
 @patch
 @abstractmethod
 def create_job(
-    self: BaseJobManager,
-    plugin_id: str,  # Plugin unique identifier
+    self:BaseJobManager,
+    plugin_id:str,  # Plugin unique identifier
     **kwargs  # Domain-specific job parameters
 ) -> JobType:  # Created job instance
-    """
-    Factory method for creating domain-specific jobs.
-
-    Subclasses must implement this to create their specific job type.
-    """
+    """Factory method for creating domain-specific jobs."""
     pass
 
 # %% ../../nbs/managers/base.ipynb 12
 @patch
 @abstractmethod
 def get_worker_entry_point(
-    self: BaseJobManager
+    self:BaseJobManager
 ) -> Callable:  # Worker process entry point function
-    """
-    Return the worker process function for this manager.
-
-    Subclasses must implement this to provide their worker entry point.
-    """
+    """Return the worker process function for this manager."""
     pass
 
 # %% ../../nbs/managers/base.ipynb 13
 @patch
 @abstractmethod
 def prepare_execute_request(
-    self: BaseJobManager,
-    job: JobType  # The job to prepare for execution
+    self:BaseJobManager,
+    job:JobType  # The job to prepare for execution
 ) -> Dict[str, Any]:  # Dictionary of parameters for the worker execute request
-    """
-    Convert job to worker execute request parameters.
-
-    Subclasses must implement this to extract execution parameters from their job type.
-    """
+    """Convert job to worker execute request parameters."""
     pass
 
 # %% ../../nbs/managers/base.ipynb 14
 @patch
 @abstractmethod
 def extract_job_result(
-    self: BaseJobManager,
-    job: JobType,  # The job that was executed
-    result_data: Dict[str, Any]  # Raw result data from worker
+    self:BaseJobManager,
+    job:JobType,  # The job that was executed
+    result_data:Dict[str, Any]  # Raw result data from worker
 ) -> Dict[str, Any]:  # Formatted result for storage
-    """
-    Extract and format job result from worker response.
-
-    Subclasses must implement this to format results for their job type.
-    """
+    """Extract and format job result from worker response."""
     pass
 
 # %% ../../nbs/managers/base.ipynb 16
 @patch
 def _extract_plugin_resource_identifier(
-    self: BaseJobManager,
-    config: Dict[str, Any]  # Plugin configuration dictionary
+    self:BaseJobManager,
+    config:Dict[str, Any]  # Plugin configuration dictionary
 ) -> str:  # Plugin resource identifier string
-    """
-    Extract plugin resource identifier from plugin configuration.
-    
-    Override this method in subclasses to customize plugin resource identifier extraction
-    based on your plugin's configuration structure.
-    """
+    """Extract plugin resource identifier from plugin configuration."""
     # Try common configuration keys in order of preference
     # Check 'resource_id' first, then fallback to common model-related keys for backward compatibility
     return config.get('resource_id', 
@@ -204,46 +178,27 @@ def _extract_plugin_resource_identifier(
 # %% ../../nbs/managers/base.ipynb 18
 @patch
 async def _validate_resources(
-    self: BaseJobManager,
-    plugin_id: str,  # Plugin unique identifier
-    plugin_config: Dict[str, Any]  # Plugin configuration
+    self:BaseJobManager,
+    plugin_id:str,  # Plugin unique identifier
+    plugin_config:Dict[str, Any]  # Plugin configuration
 ) -> Optional[str]:  # Error message if validation fails, None if successful
-    """
-    Validate resources before starting a job.
-    
-    Override this method in subclasses to implement custom resource validation logic,
-    such as checking GPU availability, memory requirements, or concurrent job limits.
-    
-    This hook is called by start_job before creating and executing a job. If validation
-    fails, start_job will raise an exception with the returned error message.
-    """
+    """Validate resources before starting a job."""
     # Default implementation: no validation, always passes
     return None
 
 # %% ../../nbs/managers/base.ipynb 20
 @patch
 def _on_job_completed(
-    self: BaseJobManager,
-    job_id: str  # ID of the completed job
+    self:BaseJobManager,
+    job_id:str  # ID of the completed job
 ) -> None:
-    """
-    Hook called when a job completes successfully.
-    
-    Override this method in subclasses to implement custom post-completion logic,
-    such as saving results to disk, sending notifications, or triggering follow-up tasks.
-    
-    This hook is called automatically by _handle_job_result after a job completes
-    successfully (but not when a job fails or is cancelled).
-    
-    Note: This is a synchronous method called from the result monitor thread.
-    If you need async operations, use asyncio.create_task() or similar.
-    """
+    """Hook called when a job completes successfully."""
     # Default implementation: no action
     pass
 
 # %% ../../nbs/managers/base.ipynb 23
 @patch
-def _start_worker(self: BaseJobManager):
+def _start_worker(self:BaseJobManager):
     """Start the worker process and result monitor."""
     if self.worker_process and self.worker_process.is_alive():
         return  # Already running
@@ -279,7 +234,7 @@ def _start_worker(self: BaseJobManager):
 
 # %% ../../nbs/managers/base.ipynb 24
 @patch
-def _init_worker(self: BaseJobManager):
+def _init_worker(self:BaseJobManager):
     """Send initialization message to worker with plugin configurations."""
     # Only send plugin configs if plugin registry is available
     plugin_configs = {}
@@ -302,7 +257,7 @@ def _init_worker(self: BaseJobManager):
 
 # %% ../../nbs/managers/base.ipynb 25
 @patch
-def _restart_worker(self: BaseJobManager):
+def _restart_worker(self:BaseJobManager):
     """Restart the worker process after an error or cancellation."""
     # Track restart
     self.restart_count += 1
@@ -329,7 +284,7 @@ def _restart_worker(self: BaseJobManager):
 
 # %% ../../nbs/managers/base.ipynb 27
 @patch
-def _monitor_results(self: BaseJobManager):
+def _monitor_results(self:BaseJobManager):
     """Monitor the result queue in a background thread."""
     while self.monitor_running:
         try:
@@ -368,7 +323,10 @@ def _monitor_results(self: BaseJobManager):
 
 # %% ../../nbs/managers/base.ipynb 28
 @patch
-def _handle_job_result(self: BaseJobManager, result: Dict[str, Any]):
+def _handle_job_result(
+    self:BaseJobManager, 
+    result:Dict[str, Any]  # Result data from worker
+):
     """Handle a job result from the worker."""
     job_id = result['job_id']
 
@@ -414,7 +372,10 @@ def _handle_job_result(self: BaseJobManager, result: Dict[str, Any]):
 
 # %% ../../nbs/managers/base.ipynb 29
 @patch
-def _handle_stream_chunk(self: BaseJobManager, chunk_data: Dict[str, Any]):
+def _handle_stream_chunk(
+    self:BaseJobManager, 
+    chunk_data:Dict[str, Any]  # Chunk data from worker
+):
     """Handle a streaming chunk from the worker."""
     job_id = chunk_data.get('job_id')
     chunk = chunk_data.get('chunk', '')
@@ -432,7 +393,7 @@ def _handle_stream_chunk(self: BaseJobManager, chunk_data: Dict[str, Any]):
 
 # %% ../../nbs/managers/base.ipynb 30
 @patch
-def _handle_worker_error(self: BaseJobManager):
+def _handle_worker_error(self:BaseJobManager):
     """Handle worker fatal error based on restart policy."""
     policy = self.worker_config.restart_policy
 
@@ -459,8 +420,8 @@ def _handle_worker_error(self: BaseJobManager):
 # %% ../../nbs/managers/base.ipynb 32
 @patch
 def get_plugin_name(
-    self: BaseJobManager,
-    plugin_id: str  # Plugin unique identifier
+    self:BaseJobManager,
+    plugin_id:str  # Plugin unique identifier
 ) -> Optional[str]:  # Plugin name or None
     """Get plugin name from plugin ID (requires plugin registry)."""
     if not self.plugin_registry:
@@ -474,12 +435,10 @@ def get_plugin_name(
 # %% ../../nbs/managers/base.ipynb 33
 @patch
 async def unload_plugin(
-    self: BaseJobManager,
-    plugin_name: str  # Name of the plugin to unload
+    self:BaseJobManager,
+    plugin_name:str  # Name of the plugin to unload
 ) -> bool:  # True if successful, False otherwise
-    """
-    Unload a plugin from the worker to free resources.
-    """
+    """Unload a plugin from the worker to free resources."""
     if not self.worker_process or not self.worker_process.is_alive():
         return False
 
@@ -524,13 +483,11 @@ async def unload_plugin(
 # %% ../../nbs/managers/base.ipynb 34
 @patch
 async def reload_plugin(
-    self: BaseJobManager,
-    plugin_name: str,  # Name of the plugin to reload
-    config: Dict[str, Any]  # New configuration
+    self:BaseJobManager,
+    plugin_name:str,  # Name of the plugin to reload
+    config:Dict[str, Any]  # New configuration
 ) -> bool:  # True if successful, False otherwise
-    """
-    Reload a plugin with new configuration.
-    """
+    """Reload a plugin with new configuration."""
     print(f"\n[Manager] Reloading plugin: {plugin_name}")
     print(f"[Manager] Device: {config.get('device', 'unknown')}")
 
@@ -595,16 +552,11 @@ async def reload_plugin(
 # %% ../../nbs/managers/base.ipynb 36
 @patch
 async def start_job(
-    self: BaseJobManager,
-    plugin_id: str,  # Plugin unique identifier
+    self:BaseJobManager,
+    plugin_id:str,  # Plugin unique identifier
     **kwargs  # Domain-specific job parameters
 ) -> JobType:  # Created and started job
-    """
-    Start a new job.
-    
-    Calls the _validate_resources hook before starting the job. Override that
-    method in subclasses to add custom resource validation logic.
-    """
+    """Start a new job."""
     # Ensure worker is running (lazy initialization)
     if not self.worker_process or not self.worker_process.is_alive():
         self._start_worker()
@@ -677,13 +629,10 @@ async def start_job(
 # %% ../../nbs/managers/base.ipynb 37
 @patch
 async def cancel_job(
-    self: BaseJobManager,
-    job_id: str  # ID of the job to cancel
+    self:BaseJobManager,
+    job_id:str  # ID of the job to cancel
 ) -> bool:  # True if cancellation successful
-    """
-    Cancel a running job by terminating the worker process.
-    The worker will be automatically restarted based on restart policy.
-    """
+    """Cancel a running job by terminating the worker process."""
     if job_id not in self.jobs:
         return False
 
@@ -734,8 +683,8 @@ async def cancel_job(
 # %% ../../nbs/managers/base.ipynb 38
 @patch
 def get_job(
-    self: BaseJobManager,
-    job_id: str  # Unique job identifier
+    self:BaseJobManager,
+    job_id:str  # Unique job identifier
 ) -> Optional[JobType]:  # Job object or None
     """Get a job by ID."""
     return self.jobs.get(job_id)
@@ -743,7 +692,7 @@ def get_job(
 # %% ../../nbs/managers/base.ipynb 39
 @patch
 def get_all_jobs(
-    self: BaseJobManager
+    self:BaseJobManager
 ) -> List[JobType]:  # List of all jobs
     """Get all jobs."""
     return list(self.jobs.values())
@@ -751,8 +700,8 @@ def get_all_jobs(
 # %% ../../nbs/managers/base.ipynb 40
 @patch
 def get_job_result(
-    self: BaseJobManager,
-    job_id: str  # Unique job identifier
+    self:BaseJobManager,
+    job_id:str  # Unique job identifier
 ) -> Optional[Dict[str, Any]]:  # Job result or None
     """Get job result."""
     return self.results.get(job_id)
@@ -760,7 +709,7 @@ def get_job_result(
 # %% ../../nbs/managers/base.ipynb 41
 @patch
 def clear_completed_jobs(
-    self: BaseJobManager
+    self:BaseJobManager
 ) -> int:  # Number of jobs cleared
     """Clear completed, failed, and cancelled jobs."""
     completed = [
@@ -780,9 +729,9 @@ def clear_completed_jobs(
 # %% ../../nbs/managers/base.ipynb 44
 @patch
 async def broadcast_event(
-    self: BaseJobManager,
-    event_type: str,  # Event type identifier
-    data: Dict[str, Any]  # Event data payload
+    self:BaseJobManager,
+    event_type:str,  # Event type identifier
+    data:Dict[str, Any]  # Event data payload
 ):
     """Broadcast an event to all connected SSE clients (requires event broadcaster)."""
     if self.event_broadcaster:
@@ -791,8 +740,8 @@ async def broadcast_event(
 # %% ../../nbs/managers/base.ipynb 45
 @patch
 def check_streaming_support(
-    self: BaseJobManager,
-    plugin_id: str  # Plugin unique identifier
+    self:BaseJobManager,
+    plugin_id:str  # Plugin unique identifier
 ) -> bool:  # True if streaming supported
     """Check if a plugin supports streaming."""
     # This would need to be implemented by subclasses if needed
@@ -801,7 +750,7 @@ def check_streaming_support(
 
 # %% ../../nbs/managers/base.ipynb 46
 @patch
-def shutdown(self: BaseJobManager):
+def shutdown(self:BaseJobManager):
     """Shutdown the manager and cleanup resources."""
     # Stop result monitor
     self.monitor_running = False

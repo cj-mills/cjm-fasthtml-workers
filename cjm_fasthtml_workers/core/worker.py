@@ -18,20 +18,14 @@ from cjm_fasthtml_workers.core.protocol import (
 
 # %% ../../nbs/core/worker.ipynb 5
 def base_worker_process(
-    request_queue: multiprocessing.Queue,  # Queue for receiving job requests from parent
-    result_queue: multiprocessing.Queue,  # Queue for sending job results back to parent
-    response_queue: multiprocessing.Queue,  # Queue for sending command responses back to parent
-    plugin_manager_factory: Callable[[], PluginManagerAdapter],  # Factory function that creates a plugin manager instance
-    result_adapter: Optional[Callable[[Any], Dict[str, Any]]] = None,  # Optional function to adapt plugin results to dict format
-    supports_streaming: bool = False  # Whether this worker supports streaming execution
+    request_queue:multiprocessing.Queue,  # Queue for receiving job requests from parent
+    result_queue:multiprocessing.Queue,  # Queue for sending job results back to parent
+    response_queue:multiprocessing.Queue,  # Queue for sending command responses back to parent
+    plugin_manager_factory:Callable[[], PluginManagerAdapter],  # Factory function that creates a plugin manager instance
+    result_adapter:Optional[Callable[[Any], Dict[str, Any]]]=None,  # Optional function to adapt plugin results to dict format
+    supports_streaming:bool=False  # Whether this worker supports streaming execution
 ):
-    """
-    Generic long-lived worker process that handles job execution.
-    
-    The worker runs in an isolated subprocess, receiving jobs from the parent process
-    via queues and sending results back. It manages plugin lifecycle and can be 
-    terminated for cancellation.
-    """
+    """Generic long-lived worker process that handles job execution."""
     try:
         plugin_manager: Optional[PluginManagerAdapter] = None
         plugin_configs: Dict[str, Dict[str, Any]] = {}
