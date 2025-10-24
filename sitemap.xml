@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://cj-mills.github.io/cjm-fasthtml-workers/core/worker.html</loc>
+    <lastmod>2025-10-24T00:29:41.436Z</lastmod>
+  </url>
+  <url>
+    <loc>https://cj-mills.github.io/cjm-fasthtml-workers/core/config.html</loc>
+    <lastmod>2025-10-24T00:29:41.423Z</lastmod>
+  </url>
+  <url>
+    <loc>https://cj-mills.github.io/cjm-fasthtml-workers/index.html</loc>
+    <lastmod>2025-10-24T00:29:41.312Z</lastmod>
+  </url>
+  <url>
+    <loc>https://cj-mills.github.io/cjm-fasthtml-workers/extensions/protocols.html</loc>
+    <lastmod>2025-10-24T00:29:41.351Z</lastmod>
+  </url>
+  <url>
+    <loc>https://cj-mills.github.io/cjm-fasthtml-workers/managers/base.html</loc>
+    <lastmod>2025-10-24T00:29:41.492Z</lastmod>
+  </url>
+  <url>
+    <loc>https://cj-mills.github.io/cjm-fasthtml-workers/core/protocol.html</loc>
+    <lastmod>2025-10-24T00:29:41.450Z</lastmod>
+  </url>
+  <url>
+    <loc>https://cj-mills.github.io/cjm-fasthtml-workers/core/adapters.html</loc>
+    <lastmod>2025-10-24T00:29:41.352Z</lastmod>
+  </url>
+</urlset>

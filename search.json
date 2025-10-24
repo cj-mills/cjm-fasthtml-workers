@@ -1,0 +1,370 @@
+[
+  {
+    "objectID": "core/worker.html",
+    "href": "core/worker.html",
+    "title": "worker",
+    "section": "",
+    "text": "The base_worker_process function is the entry point for worker subprocesses. It:\n\nReceives plugin configurations through an init message\nCreates a plugin manager instance (isolated from the main process)\nLoads configured plugins\nProcesses job execution requests from the request queue\nSends results back through the result queue\nHandles plugin reload/unload commands\nSupports streaming execution for incremental results\n\n\nsource\n\n\n\n base_worker_process (request_queue:&lt;boundmethodBaseContext.Queueof&lt;multip\n                      rocessing.context.DefaultContextobjectat0x7f1571404a\n                      90&gt;&gt;, result_queue:&lt;boundmethodBaseContext.Queueof&lt;m\n                      ultiprocessing.context.DefaultContextobjectat0x7f157\n                      1404a90&gt;&gt;, response_queue:&lt;boundmethodBaseContext.Qu\n                      eueof&lt;multiprocessing.context.DefaultContextobjectat\n                      0x7f1571404a90&gt;&gt;, plugin_manager_factory:Callable[[]\n                      ,cjm_fasthtml_workers.core.protocol.PluginManagerAda\n                      pter], result_adapter:Optional[Callable[[Any],Dict[s\n                      tr,Any]]]=None, supports_streaming:bool=False)\n\nGeneric long-lived worker process that handles job execution.\n\n\n\n\n\n\n\n\n\n\nType\nDefault\nDetails\n\n\n\n\nrequest_queue\nQueue\n\nQueue for receiving job requests from parent\n\n\nresult_queue\nQueue\n\nQueue for sending job results back to parent\n\n\nresponse_queue\nQueue\n\nQueue for sending command responses back to parent\n\n\nplugin_manager_factory\nCallable\n\nFactory function that creates a plugin manager instance\n\n\nresult_adapter\nOptional\nNone\nOptional function to adapt plugin results to dict format\n\n\nsupports_streaming\nbool\nFalse\nWhether this worker supports streaming execution\n\n\n\n\n\n\nThe worker communicates with the parent process using three queues:\nRequest Queue (Parent → Worker): - INIT: Initialize plugin manager with configurations - EXECUTE: Execute a job with specified plugin and parameters - RELOAD: Reload a plugin with new configuration - UNLOAD: Unload a plugin to free resources - GET_STATE: Query current worker state - STOP: Gracefully shutdown the worker\nResult Queue (Worker → Parent): - READY: Worker initialized successfully - RESULT: Job execution completed (success or error) - STREAM_CHUNK: Streaming output chunk - ERROR: Fatal worker error\nResponse Queue (Worker → Parent): - RESPONSE: Synchronous response to commands (reload, unload) - STATE: Worker state information\n\n\n\n\nInitialization: Parent sends INIT message with plugin configurations\nDiscovery: Worker discovers available plugins\nLoading: Worker loads configured plugins\nExecution Loop: Worker processes EXECUTE requests\nShutdown: Parent sends STOP or terminates the process\n\n\n\n\nThe worker keeps models loaded in memory between jobs. When switching plugins, it unloads the old plugin first to free GPU memory before loading the new one.",
+    "crumbs": [
+      "core",
+      "worker"
+    ]
+  },
+  {
+    "objectID": "core/worker.html#worker-process",
+    "href": "core/worker.html#worker-process",
+    "title": "worker",
+    "section": "",
+    "text": "The base_worker_process function is the entry point for worker subprocesses. It:\n\nReceives plugin configurations through an init message\nCreates a plugin manager instance (isolated from the main process)\nLoads configured plugins\nProcesses job execution requests from the request queue\nSends results back through the result queue\nHandles plugin reload/unload commands\nSupports streaming execution for incremental results\n\n\nsource\n\n\n\n base_worker_process (request_queue:&lt;boundmethodBaseContext.Queueof&lt;multip\n                      rocessing.context.DefaultContextobjectat0x7f1571404a\n                      90&gt;&gt;, result_queue:&lt;boundmethodBaseContext.Queueof&lt;m\n                      ultiprocessing.context.DefaultContextobjectat0x7f157\n                      1404a90&gt;&gt;, response_queue:&lt;boundmethodBaseContext.Qu\n                      eueof&lt;multiprocessing.context.DefaultContextobjectat\n                      0x7f1571404a90&gt;&gt;, plugin_manager_factory:Callable[[]\n                      ,cjm_fasthtml_workers.core.protocol.PluginManagerAda\n                      pter], result_adapter:Optional[Callable[[Any],Dict[s\n                      tr,Any]]]=None, supports_streaming:bool=False)\n\nGeneric long-lived worker process that handles job execution.\n\n\n\n\n\n\n\n\n\n\nType\nDefault\nDetails\n\n\n\n\nrequest_queue\nQueue\n\nQueue for receiving job requests from parent\n\n\nresult_queue\nQueue\n\nQueue for sending job results back to parent\n\n\nresponse_queue\nQueue\n\nQueue for sending command responses back to parent\n\n\nplugin_manager_factory\nCallable\n\nFactory function that creates a plugin manager instance\n\n\nresult_adapter\nOptional\nNone\nOptional function to adapt plugin results to dict format\n\n\nsupports_streaming\nbool\nFalse\nWhether this worker supports streaming execution\n\n\n\n\n\n\nThe worker communicates with the parent process using three queues:\nRequest Queue (Parent → Worker): - INIT: Initialize plugin manager with configurations - EXECUTE: Execute a job with specified plugin and parameters - RELOAD: Reload a plugin with new configuration - UNLOAD: Unload a plugin to free resources - GET_STATE: Query current worker state - STOP: Gracefully shutdown the worker\nResult Queue (Worker → Parent): - READY: Worker initialized successfully - RESULT: Job execution completed (success or error) - STREAM_CHUNK: Streaming output chunk - ERROR: Fatal worker error\nResponse Queue (Worker → Parent): - RESPONSE: Synchronous response to commands (reload, unload) - STATE: Worker state information\n\n\n\n\nInitialization: Parent sends INIT message with plugin configurations\nDiscovery: Worker discovers available plugins\nLoading: Worker loads configured plugins\nExecution Loop: Worker processes EXECUTE requests\nShutdown: Parent sends STOP or terminates the process\n\n\n\n\nThe worker keeps models loaded in memory between jobs. When switching plugins, it unloads the old plugin first to free GPU memory before loading the new one.",
+    "crumbs": [
+      "core",
+      "worker"
+    ]
+  },
+  {
+    "objectID": "core/config.html",
+    "href": "core/config.html",
+    "title": "config",
+    "section": "",
+    "text": "source\n\n\n\n RestartPolicy (value, names=None, module=None, qualname=None, type=None,\n                start=1, boundary=None)\n\nPolicy for restarting worker processes after failures.\nThe restart policy determines when worker processes should be automatically restarted after failures:\n\nNEVER: Never restart workers (useful for debugging or when you want full manual control)\nON_CANCELLATION: Restart only when a job is cancelled (default behavior)\nALWAYS: Always restart on any failure\nBACKOFF: Restart with exponential backoff delays between attempts\n\n\n# Example usage\nRestartPolicy.ON_CANCELLATION\n\n&lt;RestartPolicy.ON_CANCELLATION: 'on_cancellation'&gt;",
+    "crumbs": [
+      "core",
+      "config"
+    ]
+  },
+  {
+    "objectID": "core/config.html#restart-policy",
+    "href": "core/config.html#restart-policy",
+    "title": "config",
+    "section": "",
+    "text": "source\n\n\n\n RestartPolicy (value, names=None, module=None, qualname=None, type=None,\n                start=1, boundary=None)\n\nPolicy for restarting worker processes after failures.\nThe restart policy determines when worker processes should be automatically restarted after failures:\n\nNEVER: Never restart workers (useful for debugging or when you want full manual control)\nON_CANCELLATION: Restart only when a job is cancelled (default behavior)\nALWAYS: Always restart on any failure\nBACKOFF: Restart with exponential backoff delays between attempts\n\n\n# Example usage\nRestartPolicy.ON_CANCELLATION\n\n&lt;RestartPolicy.ON_CANCELLATION: 'on_cancellation'&gt;",
+    "crumbs": [
+      "core",
+      "config"
+    ]
+  },
+  {
+    "objectID": "core/config.html#worker-configuration",
+    "href": "core/config.html#worker-configuration",
+    "title": "config",
+    "section": "Worker Configuration",
+    "text": "Worker Configuration\n\nsource\n\nWorkerConfig\n\n WorkerConfig (request_queue_size:int=0, result_queue_size:int=100,\n               response_queue_size:int=10, restart_policy:__main__.Restart\n               Policy=&lt;RestartPolicy.ON_CANCELLATION: 'on_cancellation'&gt;,\n               max_restart_attempts:int=3,\n               restart_backoff_base_seconds:float=1.0,\n               restart_backoff_max_seconds:float=60.0, max_workers:int=1,\n               worker_start_timeout_seconds:float=30.0,\n               reload_timeout_seconds:float=30.0,\n               unload_timeout_seconds:float=10.0,\n               shutdown_timeout_seconds:float=5.0,\n               result_monitor_poll_interval_seconds:float=0.5)\n\nConfiguration for worker process behavior.\nThe WorkerConfig class provides comprehensive configuration options for worker processes:\nQueue Sizes: - Control the buffer size for communication between parent and worker processes - Set to 0 for unlimited request queue - Larger result queue (100) accommodates streaming results\nRestart Behavior: - Configure when and how workers restart after failures - Set maximum retry attempts to prevent infinite restart loops - Control backoff timing for gradual retry delays\nTimeouts: - Prevent operations from hanging indefinitely - Separate timeouts for different operations (start, reload, unload, shutdown)\nMonitoring: - Configure how frequently the result monitor checks for new results\nThe __post_init__ method validates the configuration to catch errors early.\n\n# Create default config\nconfig = WorkerConfig()\nconfig\n\nWorkerConfig(request_queue_size=0, result_queue_size=100, response_queue_size=10, restart_policy=&lt;RestartPolicy.ON_CANCELLATION: 'on_cancellation'&gt;, max_restart_attempts=3, restart_backoff_base_seconds=1.0, restart_backoff_max_seconds=60.0, max_workers=1, worker_start_timeout_seconds=30.0, reload_timeout_seconds=30.0, unload_timeout_seconds=10.0, shutdown_timeout_seconds=5.0, result_monitor_poll_interval_seconds=0.5)\n\n\n\n# Create config with custom settings\nconfig = WorkerConfig(\n    restart_policy=RestartPolicy.BACKOFF,\n    max_restart_attempts=5,\n    result_queue_size=200\n)\nconfig\n\nWorkerConfig(request_queue_size=0, result_queue_size=200, response_queue_size=10, restart_policy=&lt;RestartPolicy.BACKOFF: 'backoff'&gt;, max_restart_attempts=5, restart_backoff_base_seconds=1.0, restart_backoff_max_seconds=60.0, max_workers=1, worker_start_timeout_seconds=30.0, reload_timeout_seconds=30.0, unload_timeout_seconds=10.0, shutdown_timeout_seconds=5.0, result_monitor_poll_interval_seconds=0.5)\n\n\n\n\nValidation Tests\nThe WorkerConfig validates configuration values and raises errors for invalid settings:\n\n# Test validation: max_workers &gt; 1 raises NotImplementedError\ntry:\n    config = WorkerConfig(max_workers=2)\nexcept NotImplementedError as e:\n    print(f\"✓ Caught expected error: {e}\")\n\n✓ Caught expected error: Worker pools (max_workers &gt; 1) are not yet implemented. Current value: 2\n\n\n\n# Test validation: max_workers &lt; 1 raises ValueError\ntry:\n    config = WorkerConfig(max_workers=0)\nexcept ValueError as e:\n    print(f\"✓ Caught expected error: {e}\")\n\n✓ Caught expected error: max_workers must be &gt;= 1, got 0\n\n\n\n# Test validation: negative restart_backoff_base_seconds raises ValueError\ntry:\n    config = WorkerConfig(restart_backoff_base_seconds=-1.0)\nexcept ValueError as e:\n    print(f\"✓ Caught expected error: {e}\")\n\n✓ Caught expected error: restart_backoff_base_seconds must be &gt; 0, got -1.0",
+    "crumbs": [
+      "core",
+      "config"
+    ]
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "cjm-fasthtml-workers",
+    "section": "",
+    "text": "pip install cjm_fasthtml_workers",
+    "crumbs": [
+      "cjm-fasthtml-workers"
+    ]
+  },
+  {
+    "objectID": "index.html#install",
+    "href": "index.html#install",
+    "title": "cjm-fasthtml-workers",
+    "section": "",
+    "text": "pip install cjm_fasthtml_workers",
+    "crumbs": [
+      "cjm-fasthtml-workers"
+    ]
+  },
+  {
+    "objectID": "index.html#project-structure",
+    "href": "index.html#project-structure",
+    "title": "cjm-fasthtml-workers",
+    "section": "Project Structure",
+    "text": "Project Structure\nnbs/\n├── core/ (4)\n│   ├── adapters.ipynb  # Adapter utilities for making plugin managers compatible with the worker system.\n│   ├── config.ipynb    # Configuration for worker processes including restart policies, timeouts, and queue sizes.\n│   ├── protocol.ipynb  # Protocol definitions for worker communication and plugin manager integration.\n│   └── worker.ipynb    # Generic worker process for executing plugin-based jobs in isolated subprocesses.\n├── extensions/ (1)\n│   └── protocols.ipynb  # Optional integration protocols for plugin registries, resource management, and event broadcasting.\n└── managers/ (1)\n    └── base.ipynb  # Abstract base class for managing background jobs with worker processes.\nTotal: 6 notebooks across 3 directories",
+    "crumbs": [
+      "cjm-fasthtml-workers"
+    ]
+  },
+  {
+    "objectID": "index.html#module-dependencies",
+    "href": "index.html#module-dependencies",
+    "title": "cjm-fasthtml-workers",
+    "section": "Module Dependencies",
+    "text": "Module Dependencies\ngraph LR\n    core_adapters[core.adapters&lt;br/&gt;adapters]\n    core_config[core.config&lt;br/&gt;config]\n    core_protocol[core.protocol&lt;br/&gt;protocol]\n    core_worker[core.worker&lt;br/&gt;worker]\n    extensions_protocols[extensions.protocols&lt;br/&gt;protocols]\n    managers_base[managers.base&lt;br/&gt;base]\n\n    core_adapters --&gt; core_protocol\n    core_worker --&gt; core_protocol\n    managers_base --&gt; core_config\n    managers_base --&gt; extensions_protocols\n    managers_base --&gt; core_protocol\n5 cross-module dependencies detected",
+    "crumbs": [
+      "cjm-fasthtml-workers"
+    ]
+  },
+  {
+    "objectID": "index.html#cli-reference",
+    "href": "index.html#cli-reference",
+    "title": "cjm-fasthtml-workers",
+    "section": "CLI Reference",
+    "text": "CLI Reference\nNo CLI commands found in this project.",
+    "crumbs": [
+      "cjm-fasthtml-workers"
+    ]
+  },
+  {
+    "objectID": "index.html#module-overview",
+    "href": "index.html#module-overview",
+    "title": "cjm-fasthtml-workers",
+    "section": "Module Overview",
+    "text": "Module Overview\nDetailed documentation for each module in the project:\n\nadapters (adapters.ipynb)\n\nAdapter utilities for making plugin managers compatible with the worker system.\n\n\nImport\nfrom cjm_fasthtml_workers.core.adapters import (\n    create_simple_adapter,\n    default_result_adapter\n)\n\n\nFunctions\ndef create_simple_adapter(\n    plugin_manager:Any,  # The plugin manager instance to adapt\n    result_adapter:Optional[callable]=None  # Optional function to convert plugin results to dict\n) -&gt; PluginManagerAdapter:  # Adapter that satisfies PluginManagerAdapter protocol\n    \"Create a simple adapter for a plugin manager.\"\ndef default_result_adapter(\n    result:Any  # Plugin execution result\n) -&gt; Dict[str, Any]:  # Dictionary with text and metadata\n    \"Default adapter for converting plugin results to dictionaries.\"\n\n\n\nbase (base.ipynb)\n\nAbstract base class for managing background jobs with worker processes.\n\n\nImport\nfrom cjm_fasthtml_workers.managers.base import (\n    JobType,\n    BaseJob,\n    BaseJobManager\n)\n\n\nFunctions\n@patch\n@abstractmethod\ndef create_job(\n    self:BaseJobManager,\n    plugin_id:str,  # Plugin unique identifier\n    **kwargs  # Domain-specific job parameters\n) -&gt; JobType:  # Created job instance\n    \"Factory method for creating domain-specific jobs.\"\n@patch\n@abstractmethod\ndef get_worker_entry_point(\n    self:BaseJobManager\n) -&gt; Callable:  # Worker process entry point function\n    \"Return the worker process function for this manager.\"\n@patch\n@abstractmethod\ndef prepare_execute_request(\n    self:BaseJobManager,\n    job:JobType  # The job to prepare for execution\n) -&gt; Dict[str, Any]:  # Dictionary of parameters for the worker execute request\n    \"Convert job to worker execute request parameters.\"\n@patch\n@abstractmethod\ndef extract_job_result(\n    self:BaseJobManager,\n    job:JobType,  # The job that was executed\n    result_data:Dict[str, Any]  # Raw result data from worker\n) -&gt; Dict[str, Any]:  # Formatted result for storage\n    \"Extract and format job result from worker response.\"\n@patch\ndef _extract_plugin_resource_identifier(\n    self:BaseJobManager,\n    config:Dict[str, Any]  # Plugin configuration dictionary\n) -&gt; str:  # Plugin resource identifier string\n    \"Extract plugin resource identifier from plugin configuration.\"\n@patch\nasync def _validate_resources(\n    self:BaseJobManager,\n    plugin_id:str,  # Plugin unique identifier\n    plugin_config:Dict[str, Any]  # Plugin configuration\n) -&gt; Optional[str]:  # Error message if validation fails, None if successful\n    \"Validate resources before starting a job.\"\n@patch\ndef _on_job_completed(\n    self:BaseJobManager,\n    job_id:str  # ID of the completed job\n) -&gt; None\n    \"Hook called when a job completes successfully.\"\n@patch\ndef _start_worker(self:BaseJobManager):\n    \"\"\"Start the worker process and result monitor.\"\"\"\n    if self.worker_process and self.worker_process.is_alive()\n    \"Start the worker process and result monitor.\"\n@patch\ndef _init_worker(self:BaseJobManager):\n    \"\"\"Send initialization message to worker with plugin configurations.\"\"\"\n    # Only send plugin configs if plugin registry is available\n    plugin_configs = {}\n    \n    if self.plugin_registry\n    \"Send initialization message to worker with plugin configurations.\"\n@patch\ndef _restart_worker(self:BaseJobManager):\n    \"\"\"Restart the worker process after an error or cancellation.\"\"\"\n    # Track restart\n    self.restart_count += 1\n    self.last_restart_time = time.time()\n\n    # Unregister old worker from resource manager if available\n    if self.resource_manager and self.worker_process\n    \"Restart the worker process after an error or cancellation.\"\n@patch\ndef _monitor_results(self:BaseJobManager):\n    \"\"\"Monitor the result queue in a background thread.\"\"\"\n    while self.monitor_running\n    \"Monitor the result queue in a background thread.\"\n@patch\ndef _handle_job_result(\n    self:BaseJobManager, \n    result:Dict[str, Any]  # Result data from worker\n)\n    \"Handle a job result from the worker.\"\n@patch\ndef _handle_stream_chunk(\n    self:BaseJobManager, \n    chunk_data:Dict[str, Any]  # Chunk data from worker\n)\n    \"Handle a streaming chunk from the worker.\"\n@patch\ndef _handle_worker_error(self:BaseJobManager):\n    \"\"\"Handle worker fatal error based on restart policy.\"\"\"\n    policy = self.worker_config.restart_policy\n\n    if policy == RestartPolicy.NEVER\n    \"Handle worker fatal error based on restart policy.\"\n@patch\ndef get_plugin_name(\n    self:BaseJobManager,\n    plugin_id:str  # Plugin unique identifier\n) -&gt; Optional[str]:  # Plugin name or None\n    \"Get plugin name from plugin ID (requires plugin registry).\"\n@patch\nasync def unload_plugin(\n    self:BaseJobManager,\n    plugin_name:str  # Name of the plugin to unload\n) -&gt; bool:  # True if successful, False otherwise\n    \"Unload a plugin from the worker to free resources.\"\n@patch\nasync def reload_plugin(\n    self:BaseJobManager,\n    plugin_name:str,  # Name of the plugin to reload\n    config:Dict[str, Any]  # New configuration\n) -&gt; bool:  # True if successful, False otherwise\n    \"Reload a plugin with new configuration.\"\n@patch\nasync def start_job(\n    self:BaseJobManager,\n    plugin_id:str,  # Plugin unique identifier\n    **kwargs  # Domain-specific job parameters\n) -&gt; JobType:  # Created and started job\n    \"Start a new job.\"\n@patch\nasync def cancel_job(\n    self:BaseJobManager,\n    job_id:str  # ID of the job to cancel\n) -&gt; bool:  # True if cancellation successful\n    \"Cancel a running job by terminating the worker process.\"\n@patch\ndef get_job(\n    self:BaseJobManager,\n    job_id:str  # Unique job identifier\n) -&gt; Optional[JobType]:  # Job object or None\n    \"Get a job by ID.\"\n@patch\ndef get_all_jobs(\n    self:BaseJobManager\n) -&gt; List[JobType]:  # List of all jobs\n    \"Get all jobs.\"\n@patch\ndef get_job_result(\n    self:BaseJobManager,\n    job_id:str  # Unique job identifier\n) -&gt; Optional[Dict[str, Any]]:  # Job result or None\n    \"Get job result.\"\n@patch\ndef clear_completed_jobs(\n    self:BaseJobManager\n) -&gt; int:  # Number of jobs cleared\n    \"Clear completed, failed, and cancelled jobs.\"\n@patch\nasync def broadcast_event(\n    self:BaseJobManager,\n    event_type:str,  # Event type identifier\n    data:Dict[str, Any]  # Event data payload\n)\n    \"Broadcast an event to all connected SSE clients (requires event broadcaster).\"\n@patch\ndef check_streaming_support(\n    self:BaseJobManager,\n    plugin_id:str  # Plugin unique identifier\n) -&gt; bool:  # True if streaming supported\n    \"Check if a plugin supports streaming.\"\n@patch\ndef shutdown(self:BaseJobManager):\n    \"\"\"Shutdown the manager and cleanup resources.\"\"\"\n    # Stop result monitor\n    self.monitor_running = False\n    if self.result_monitor_thread\n    \"Shutdown the manager and cleanup resources.\"\n\n\nClasses\n@dataclass\nclass BaseJob:\n    \"Base class for all job types.\"\n    \n    id: str  # Unique job identifier\n    plugin_id: str  # Plugin identifier for this job\n    status: str = 'pending'  # Job status: pending, running, completed, failed, cancelled\n    created_at: str = field(...)  # ISO format timestamp\n    started_at: Optional[str]  # When job started executing\n    completed_at: Optional[str]  # When job finished\n    result: Optional[Dict[str, Any]]  # Job result data\n    error: Optional[str]  # Error message if failed\n    metadata: Dict[str, Any] = field(...)  # Additional job metadata\n    worker_pid: Optional[int]  # Process ID of worker handling this job\nclass BaseJobManager:\n    def __init__(\n        self,\n        worker_type:str,  # Type identifier (e.g., \"transcription\", \"llm\", \"image-gen\")\n        category:Any,  # Plugin category this manager handles\n        supports_streaming:bool=False,  # Whether this manager supports streaming jobs\n        worker_config:Optional[WorkerConfig]=None,  # Worker configuration (uses defaults if None)\n        plugin_registry:Optional[PluginRegistryProtocol]=None,  # Optional plugin registry integration\n        resource_manager:Optional[ResourceManagerProtocol]=None,  # Optional resource manager integration\n        event_broadcaster:Optional[EventBroadcasterProtocol]=None,  # Optional SSE event broadcaster\n    )\n    \"\"\"\n    Abstract base class for managing jobs using worker processes.\n    \n    Features:\n    - Jobs processed sequentially in subprocess\n    - Plugin resources loaded once and reused\n    - True cancellation via subprocess termination\n    - Automatic worker restart based on policy\n    - Isolated worker process avoids duplicating web app initialization\n    - Optional streaming support for incremental results\n    - Optional dependency injection for plugin registry, resource manager, and event broadcaster\n    \"\"\"\n    \n    def __init__(\n            self,\n            worker_type:str,  # Type identifier (e.g., \"transcription\", \"llm\", \"image-gen\")\n            category:Any,  # Plugin category this manager handles\n            supports_streaming:bool=False,  # Whether this manager supports streaming jobs\n            worker_config:Optional[WorkerConfig]=None,  # Worker configuration (uses defaults if None)\n            plugin_registry:Optional[PluginRegistryProtocol]=None,  # Optional plugin registry integration\n            resource_manager:Optional[ResourceManagerProtocol]=None,  # Optional resource manager integration\n            event_broadcaster:Optional[EventBroadcasterProtocol]=None,  # Optional SSE event broadcaster\n        )\n        \"Initialize the job manager.\"\n\n\n\nconfig (config.ipynb)\n\nConfiguration for worker processes including restart policies, timeouts, and queue sizes.\n\n\nImport\nfrom cjm_fasthtml_workers.core.config import (\n    RestartPolicy,\n    WorkerConfig\n)\n\n\nClasses\nclass RestartPolicy(Enum):\n    \"Policy for restarting worker processes after failures.\"\n@dataclass\nclass WorkerConfig:\n    \"Configuration for worker process behavior.\"\n    \n    request_queue_size: int = 0  # 0 = unlimited\n    result_queue_size: int = 100  # Larger for streaming results\n    response_queue_size: int = 10  # For synchronous command responses\n    restart_policy: RestartPolicy = RestartPolicy.ON_CANCELLATION\n    max_restart_attempts: int = 3\n    restart_backoff_base_seconds: float = 1.0  # Base delay for exponential backoff\n    restart_backoff_max_seconds: float = 60.0  # Max delay for backoff\n    max_workers: int = 1  # Currently only 1 is supported\n    worker_start_timeout_seconds: float = 30.0\n    reload_timeout_seconds: float = 30.0\n    unload_timeout_seconds: float = 10.0\n    shutdown_timeout_seconds: float = 5.0\n    result_monitor_poll_interval_seconds: float = 0.5\n    \n\n\n\nprotocol (protocol.ipynb)\n\nProtocol definitions for worker communication and plugin manager integration.\n\n\nImport\nfrom cjm_fasthtml_workers.core.protocol import (\n    WorkerRequestType,\n    WorkerResponseType,\n    WorkerRequest,\n    WorkerResponse,\n    WorkerStreamChunk,\n    WorkerResult,\n    PluginManagerAdapter\n)\n\n\nClasses\nclass WorkerRequestType(Enum):\n    \"Types of requests sent to worker process.\"\nclass WorkerResponseType(Enum):\n    \"Types of responses from worker process.\"\n@dataclass\nclass WorkerRequest:\n    \"Base structure for worker requests.\"\n    \n    type: WorkerRequestType\n    data: Dict[str, Any]\n    \n    def to_dict(self) -&gt; Dict[str, Any]:\n            \"\"\"Convert to dictionary for queue serialization.\"\"\"\n            return {\n                'type': self.type.value,\n        \"Convert to dictionary for queue serialization.\"\n    \n    def from_dict(cls, data: Dict[str, Any]) -&gt; 'WorkerRequest':\n            \"\"\"Create from dictionary received from queue.\"\"\"\n            req_type = WorkerRequestType(data['type'])\n            request_data = {k: v for k, v in data.items() if k != 'type'}\n        \"Create from dictionary received from queue.\"\n@dataclass\nclass WorkerResponse:\n    \"Base structure for worker responses.\"\n    \n    type: WorkerResponseType\n    data: Dict[str, Any]\n    \n    def to_dict(self) -&gt; Dict[str, Any]:\n            \"\"\"Convert to dictionary for queue serialization.\"\"\"\n            return {\n                'type': self.type.value,\n        \"Convert to dictionary for queue serialization.\"\n    \n    def from_dict(cls, data: Dict[str, Any]) -&gt; 'WorkerResponse':\n            \"\"\"Create from dictionary received from queue.\"\"\"\n            resp_type = WorkerResponseType(data['type'])\n            response_data = {k: v for k, v in data.items() if k != 'type'}\n        \"Create from dictionary received from queue.\"\n@dataclass\nclass WorkerStreamChunk:\n    \"Structure for streaming job results.\"\n    \n    job_id: str  # Unique identifier for the job\n    chunk: str  # Text chunk from streaming output\n    is_final: bool = False  # Whether this is the final chunk\n    metadata: Optional[Dict[str, Any]]  # Optional metadata\n    \n    def to_dict(self) -&gt; Dict[str, Any]:\n            \"\"\"Convert to dictionary for queue serialization.\"\"\"\n            return {\n                'type': WorkerResponseType.STREAM_CHUNK.value,\n        \"Convert to dictionary for queue serialization.\"\n@dataclass\nclass WorkerResult:\n    \"Structure for job execution results.\"\n    \n    job_id: str  # Unique identifier for the job\n    status: str  # 'success' or 'error'\n    data: Optional[Dict[str, Any]]  # Result data on success\n    error: Optional[str]  # Error message on failure\n    \n    def to_dict(self) -&gt; Dict[str, Any]:\n            \"\"\"Convert to dictionary for queue serialization.\"\"\"\n            result = {\n                'type': WorkerResponseType.RESULT.value,\n        \"Convert to dictionary for queue serialization.\"\nclass PluginManagerAdapter(Protocol):\n    \"\"\"\n    Protocol that plugin managers must satisfy for worker integration.\n    \n    Uses structural subtyping (duck typing) - plugin managers don't need to\n    explicitly inherit from this, they just need to implement these methods.\n    \"\"\"\n    \n    def discover_plugins(self) -&gt; list:  # List of plugin metadata/data objects\n            \"\"\"Discover available plugins.\"\"\"\n            ...\n    \n        def load_plugin(\n            self, \n            plugin_data:Any,  # Plugin metadata/data from discovery\n            config:Dict[str, Any]  # Plugin configuration dictionary\n        ) -&gt; None\n        \"Discover available plugins.\"\n    \n    def load_plugin(\n            self, \n            plugin_data:Any,  # Plugin metadata/data from discovery\n            config:Dict[str, Any]  # Plugin configuration dictionary\n        ) -&gt; None\n        \"Load a plugin with configuration.\"\n    \n    def execute_plugin(\n            self, \n            plugin_name:str,  # Name of the plugin to execute\n            **params  # Plugin-specific parameters\n        ) -&gt; Any:  # Plugin execution result\n        \"Execute a plugin with given parameters.\"\n    \n    def execute_plugin_stream(\n            self, \n            plugin_name:str,  # Name of the plugin to execute\n            **params  # Plugin-specific parameters\n        ) -&gt; Iterator[str]:  # String chunks from plugin execution\n        \"Execute a plugin with streaming output.\"\n    \n    def reload_plugin(\n            self, \n            plugin_name:str,  # Name of the plugin to reload\n            config:Optional[Dict[str, Any]]=None  # New configuration (None to unload)\n        ) -&gt; None\n        \"Reload a plugin with new configuration.\"\n    \n    def unload_plugin(\n            self, \n            plugin_name:str  # Name of the plugin to unload\n        ) -&gt; None\n        \"Unload a plugin to free resources.\"\n    \n    def check_streaming_support(\n            self, \n            plugin_name:str  # Name of the plugin to check\n        ) -&gt; bool:  # True if plugin supports streaming\n        \"Check if a plugin supports streaming execution.\"\n\n\n\nprotocols (protocols.ipynb)\n\nOptional integration protocols for plugin registries, resource management, and event broadcasting.\n\n\nImport\nfrom cjm_fasthtml_workers.extensions.protocols import (\n    PluginRegistryProtocol,\n    ResourceManagerProtocol,\n    EventBroadcasterProtocol\n)\n\n\nClasses\nclass PluginRegistryProtocol(Protocol):\n    \"Protocol for plugin registry integration.\"\n    \n    def get_plugins_by_category(\n            self, \n            category:Any  # Plugin category (can be enum, string, etc.)\n        ) -&gt; list:  # List of plugin metadata objects\n        \"Get all plugins in a specific category.\"\n    \n    def get_plugin(\n            self, \n            plugin_id:str  # Unique plugin identifier\n        ) -&gt; Any:  # Plugin metadata object or None\n        \"Get a specific plugin by ID.\"\n    \n    def load_plugin_config(\n            self, \n            plugin_id:str  # Unique plugin identifier\n        ) -&gt; Dict[str, Any]:  # Plugin configuration dictionary\n        \"Load configuration for a plugin.\"\nclass ResourceManagerProtocol(Protocol):\n    \"Protocol for resource management integration.\"\n    \n    def register_worker(\n            self,\n            pid:int,  # Worker process ID\n            worker_type:str  # Type of worker (e.g., 'transcription', 'llm')\n        ) -&gt; None\n        \"Register a new worker process.\"\n    \n    def unregister_worker(\n            self, \n            pid:int  # Process ID of the worker to unregister\n        ) -&gt; None\n        \"Unregister a worker process.\"\n    \n    def update_worker_state(\n            self,\n            pid:int,  # Worker process ID\n            status:Optional[str]=None,  # Worker status: 'idle', 'running', etc.\n            job_id:Optional[str]=None,  # Current job ID (None if idle)\n            plugin_name:Optional[str]=None,  # Currently loaded plugin name\n            plugin_id:Optional[str]=None,  # Currently loaded plugin ID\n            loaded_plugin_resource:Optional[str]=None,  # Currently loaded plugin resource identifier\n            config:Optional[Dict[str, Any]]=None,  # Current plugin configuration\n        ) -&gt; None\n        \"Update worker state information.\"\nclass EventBroadcasterProtocol(Protocol):\n    \"Protocol for SSE event broadcasting.\"\n    \n    async def broadcast(\n            self,\n            event_type:str,  # Event type identifier\n            data:Dict[str, Any]  # Event data payload\n        ) -&gt; None\n        \"Broadcast an event to all connected clients.\"\n\n\n\nworker (worker.ipynb)\n\nGeneric worker process for executing plugin-based jobs in isolated subprocesses.\n\n\nImport\nfrom cjm_fasthtml_workers.core.worker import (\n    base_worker_process\n)\n\n\nFunctions\ndef base_worker_process(\n    request_queue:multiprocessing.Queue,  # Queue for receiving job requests from parent\n    result_queue:multiprocessing.Queue,  # Queue for sending job results back to parent\n    response_queue:multiprocessing.Queue,  # Queue for sending command responses back to parent\n    plugin_manager_factory:Callable[[], PluginManagerAdapter],  # Factory function that creates a plugin manager instance\n    result_adapter:Optional[Callable[[Any], Dict[str, Any]]]=None,  # Optional function to adapt plugin results to dict format\n    supports_streaming:bool=False  # Whether this worker supports streaming execution\n)\n    \"Generic long-lived worker process that handles job execution.\"",
+    "crumbs": [
+      "cjm-fasthtml-workers"
+    ]
+  },
+  {
+    "objectID": "extensions/protocols.html",
+    "href": "extensions/protocols.html",
+    "title": "protocols",
+    "section": "",
+    "text": "These protocols define optional integrations that can be injected into the BaseJobManager. All integrations are optional - the worker system functions without them.",
+    "crumbs": [
+      "extensions",
+      "protocols"
+    ]
+  },
+  {
+    "objectID": "extensions/protocols.html#plugin-registry-protocol",
+    "href": "extensions/protocols.html#plugin-registry-protocol",
+    "title": "protocols",
+    "section": "Plugin Registry Protocol",
+    "text": "Plugin Registry Protocol\n\nsource\n\nPluginRegistryProtocol\n\n PluginRegistryProtocol (*args, **kwargs)\n\nProtocol for plugin registry integration.",
+    "crumbs": [
+      "extensions",
+      "protocols"
+    ]
+  },
+  {
+    "objectID": "extensions/protocols.html#resource-manager-protocol",
+    "href": "extensions/protocols.html#resource-manager-protocol",
+    "title": "protocols",
+    "section": "Resource Manager Protocol",
+    "text": "Resource Manager Protocol\n\nsource\n\nResourceManagerProtocol\n\n ResourceManagerProtocol (*args, **kwargs)\n\nProtocol for resource management integration.",
+    "crumbs": [
+      "extensions",
+      "protocols"
+    ]
+  },
+  {
+    "objectID": "extensions/protocols.html#event-broadcaster-protocol",
+    "href": "extensions/protocols.html#event-broadcaster-protocol",
+    "title": "protocols",
+    "section": "Event Broadcaster Protocol",
+    "text": "Event Broadcaster Protocol\n\nsource\n\nEventBroadcasterProtocol\n\n EventBroadcasterProtocol (*args, **kwargs)\n\nProtocol for SSE event broadcasting.",
+    "crumbs": [
+      "extensions",
+      "protocols"
+    ]
+  },
+  {
+    "objectID": "extensions/protocols.html#usage-examples",
+    "href": "extensions/protocols.html#usage-examples",
+    "title": "protocols",
+    "section": "Usage Examples",
+    "text": "Usage Examples\nThese protocols enable flexible integration:\n# Without any integrations\nmanager = MyJobManager(\n    worker_type=\"my_worker\",\n    category=\"processing\"\n)\n\n# With plugin registry only\nmanager = MyJobManager(\n    worker_type=\"my_worker\",\n    category=\"processing\",\n    plugin_registry=my_registry\n)\n\n# With all integrations\nmanager = MyJobManager(\n    worker_type=\"my_worker\",\n    category=\"processing\",\n    plugin_registry=my_registry,\n    resource_manager=my_resource_mgr,\n    event_broadcaster=my_sse_manager\n)\n\nResourceManagerProtocol Example\nThe update_worker_state method accepts explicit optional parameters:\nclass MyResourceManager:\n    def register_worker(self, pid: int, worker_type: str) -&gt; None:\n        print(f\"Registered {worker_type} worker with PID {pid}\")\n    \n    def unregister_worker(self, pid: int) -&gt; None:\n        print(f\"Unregistered worker with PID {pid}\")\n    \n    def update_worker_state(\n        self,\n        pid: int,\n        status: Optional[str] = None,\n        job_id: Optional[str] = None,\n        plugin_name: Optional[str] = None,\n        plugin_id: Optional[str] = None,\n        loaded_plugin_resource: Optional[str] = None,\n        config: Optional[Dict[str, Any]] = None,\n    ) -&gt; None:\n        # Update only the provided fields\n        if status:\n            print(f\"Worker {pid} status: {status}\")\n        if job_id:\n            print(f\"Worker {pid} running job: {job_id}\")\n        if loaded_plugin_resource:\n            print(f\"Worker {pid} loaded resource: {loaded_plugin_resource}\")\n\n# Usage\nresource_mgr = MyResourceManager()\n\n# Update only status\nresource_mgr.update_worker_state(pid=12345, status=\"running\")\n\n# Update multiple fields\nresource_mgr.update_worker_state(\n    pid=12345,\n    status=\"running\",\n    job_id=\"abc123\",\n    loaded_plugin_resource=\"whisper-large-v3\"\n)\n\n# Clear fields (set to None)\nresource_mgr.update_worker_state(\n    pid=12345,\n    status=\"idle\",\n    job_id=None,  # No job running\n    loaded_plugin_resource=None  # Resource unloaded\n)\n\n\nTest Implementations\nLet’s create working implementations of these protocols to demonstrate their usage:\n\n# Test PluginRegistryProtocol implementation\nclass SimplePluginRegistry:\n    def __init__(self):\n        # Mock plugin data\n        self.plugins = {\n            'plugin-1': type('PluginMeta', (), {\n                'id': 'plugin-1',\n                'name': 'Text Processor',\n                'category': 'processing'\n            })(),\n            'plugin-2': type('PluginMeta', (), {\n                'id': 'plugin-2',\n                'name': 'Image Analyzer',\n                'category': 'vision'\n            })()\n        }\n        self.configs = {\n            'plugin-1': {'model': 'gpt-3.5', 'max_tokens': 100},\n            'plugin-2': {'model': 'resnet-50', 'device': 'cuda'}\n        }\n    \n    def get_plugins_by_category(self, category):\n        return [p for p in self.plugins.values() if p.category == category]\n    \n    def get_plugin(self, plugin_id):\n        return self.plugins.get(plugin_id)\n    \n    def load_plugin_config(self, plugin_id):\n        return self.configs.get(plugin_id, {})\n\n# Test the implementation\nregistry = SimplePluginRegistry()\nregistry.get_plugins_by_category('processing')\n\n[&lt;__main__.PluginMeta&gt;]\n\n\n\n# Test getting a specific plugin and its config\nplugin = registry.get_plugin('plugin-1')\nconfig = registry.load_plugin_config('plugin-1')\nprint(f\"Plugin: {plugin.name}\")\nprint(f\"Config: {config}\")\n\nPlugin: Text Processor\nConfig: {'model': 'gpt-3.5', 'max_tokens': 100}\n\n\n\n# Test ResourceManagerProtocol implementation\nclass SimpleResourceManager:\n    def __init__(self):\n        self.workers = {}\n    \n    def register_worker(self, pid, worker_type):\n        self.workers[pid] = {\n            'type': worker_type,\n            'status': 'idle',\n            'job_id': None,\n            'plugin_name': None,\n            'loaded_plugin_resource': None\n        }\n        print(f\"Registered {worker_type} worker with PID {pid}\")\n    \n    def unregister_worker(self, pid):\n        if pid in self.workers:\n            del self.workers[pid]\n            print(f\"Unregistered worker PID {pid}\")\n    \n    def update_worker_state(self, pid, status=None, job_id=None, \n                           plugin_name=None, plugin_id=None, \n                           loaded_plugin_resource=None, config=None):\n        if pid not in self.workers:\n            return\n        \n        if status:\n            self.workers[pid]['status'] = status\n        if job_id is not None:\n            self.workers[pid]['job_id'] = job_id\n        if plugin_name is not None:\n            self.workers[pid]['plugin_name'] = plugin_name\n        if loaded_plugin_resource is not None:\n            self.workers[pid]['loaded_plugin_resource'] = loaded_plugin_resource\n        \n        print(f\"Updated worker {pid}: {self.workers[pid]}\")\n\n# Test the implementation\nresource_mgr = SimpleResourceManager()\nresource_mgr.register_worker(12345, 'transcription')\n\nRegistered transcription worker with PID 12345\n\n\n\n# Update worker state - running a job\nresource_mgr.update_worker_state(\n    pid=12345,\n    status='running',\n    job_id='job-abc123',\n    plugin_name='whisper',\n    loaded_plugin_resource='whisper-large-v3'\n)\n\nUpdated worker 12345: {'type': 'transcription', 'status': 'running', 'job_id': 'job-abc123', 'plugin_name': 'whisper', 'loaded_plugin_resource': 'whisper-large-v3'}\n\n\n\n# Test EventBroadcasterProtocol implementation\nclass SimpleEventBroadcaster:\n    def __init__(self):\n        self.events = []\n    \n    async def broadcast(self, event_type, data):\n        event = {'type': event_type, 'data': data}\n        self.events.append(event)\n        print(f\"Broadcast: {event_type} - {data}\")\n\n# Test the implementation\nimport asyncio\n\nbroadcaster = SimpleEventBroadcaster()\nawait broadcaster.broadcast('job:started', {'job_id': 'job-123', 'plugin': 'test'})\n\nBroadcast: job:started - {'job_id': 'job-123', 'plugin': 'test'}\n\n\n\n# Broadcast multiple events\nawait broadcaster.broadcast('job:completed', {'job_id': 'job-123', 'status': 'success'})\n\n# View all broadcasted events\nbroadcaster.events\n\nBroadcast: job:completed - {'job_id': 'job-123', 'status': 'success'}\n\n\n[{'type': 'job:started', 'data': {'job_id': 'job-123', 'plugin': 'test'}},\n {'type': 'job:completed', 'data': {'job_id': 'job-123', 'status': 'success'}}]",
+    "crumbs": [
+      "extensions",
+      "protocols"
+    ]
+  },
+  {
+    "objectID": "managers/base.html",
+    "href": "managers/base.html",
+    "title": "base",
+    "section": "",
+    "text": "source\n\n\n\n BaseJob (id:str, plugin_id:str, status:str='pending',\n          created_at:str=&lt;factory&gt;, started_at:Optional[str]=None,\n          completed_at:Optional[str]=None,\n          result:Optional[Dict[str,Any]]=None, error:Optional[str]=None,\n          metadata:Dict[str,Any]=&lt;factory&gt;, worker_pid:Optional[int]=None)\n\nBase class for all job types.",
+    "crumbs": [
+      "managers",
+      "base"
+    ]
+  },
+  {
+    "objectID": "managers/base.html#basejob-dataclass",
+    "href": "managers/base.html#basejob-dataclass",
+    "title": "base",
+    "section": "",
+    "text": "source\n\n\n\n BaseJob (id:str, plugin_id:str, status:str='pending',\n          created_at:str=&lt;factory&gt;, started_at:Optional[str]=None,\n          completed_at:Optional[str]=None,\n          result:Optional[Dict[str,Any]]=None, error:Optional[str]=None,\n          metadata:Dict[str,Any]=&lt;factory&gt;, worker_pid:Optional[int]=None)\n\nBase class for all job types.",
+    "crumbs": [
+      "managers",
+      "base"
+    ]
+  },
+  {
+    "objectID": "managers/base.html#basejobmanager-class",
+    "href": "managers/base.html#basejobmanager-class",
+    "title": "base",
+    "section": "BaseJobManager Class",
+    "text": "BaseJobManager Class\nThe BaseJobManager is an abstract base class that provides the core infrastructure for managing background jobs with worker processes. It handles:\n\nWorker process lifecycle (start, restart, shutdown)\nJob queuing and execution\nResult monitoring\nResource management integration (optional)\nEvent broadcasting (optional)\n\n\nsource\n\nBaseJobManager\n\n BaseJobManager (worker_type:str, category:Any,\n                 supports_streaming:bool=False, worker_config:Optional[cjm\n                 _fasthtml_workers.core.config.WorkerConfig]=None, plugin_\n                 registry:Optional[cjm_fasthtml_workers.extensions.protoco\n                 ls.PluginRegistryProtocol]=None, resource_manager:Optiona\n                 l[cjm_fasthtml_workers.extensions.protocols.ResourceManag\n                 erProtocol]=None, event_broadcaster:Optional[cjm_fasthtml\n                 _workers.extensions.protocols.EventBroadcasterProtocol]=N\n                 one)\n\n*Abstract base class for managing jobs using worker processes.\nFeatures: - Jobs processed sequentially in subprocess - Plugin resources loaded once and reused - True cancellation via subprocess termination - Automatic worker restart based on policy - Isolated worker process avoids duplicating web app initialization - Optional streaming support for incremental results - Optional dependency injection for plugin registry, resource manager, and event broadcaster*\n\n\n\n\n\n\n\n\n\n\nType\nDefault\nDetails\n\n\n\n\nworker_type\nstr\n\nType identifier (e.g., “transcription”, “llm”, “image-gen”)\n\n\ncategory\nAny\n\nPlugin category this manager handles\n\n\nsupports_streaming\nbool\nFalse\nWhether this manager supports streaming jobs\n\n\nworker_config\nOptional\nNone\nWorker configuration (uses defaults if None)\n\n\nplugin_registry\nOptional\nNone\nOptional plugin registry integration\n\n\nresource_manager\nOptional\nNone\nOptional resource manager integration\n\n\nevent_broadcaster\nOptional\nNone\nOptional SSE event broadcaster",
+    "crumbs": [
+      "managers",
+      "base"
+    ]
+  },
+  {
+    "objectID": "managers/base.html#abstract-methods",
+    "href": "managers/base.html#abstract-methods",
+    "title": "base",
+    "section": "Abstract Methods",
+    "text": "Abstract Methods\nSubclasses must implement these methods to customize job handling for their specific use case.\n\nsource\n\nBaseJobManager.create_job\n\n BaseJobManager.create_job (plugin_id:str, **kwargs)\n\nFactory method for creating domain-specific jobs.\n\n\n\n\nType\nDetails\n\n\n\n\nplugin_id\nstr\nPlugin unique identifier\n\n\nkwargs\nVAR_KEYWORD\n\n\n\nReturns\nJobType\nCreated job instance\n\n\n\n\nsource\n\n\nBaseJobManager.get_worker_entry_point\n\n BaseJobManager.get_worker_entry_point ()\n\nReturn the worker process function for this manager.\n\nsource\n\n\nBaseJobManager.prepare_execute_request\n\n BaseJobManager.prepare_execute_request (job:~JobType)\n\nConvert job to worker execute request parameters.\n\n\n\n\n\n\n\n\n\nType\nDetails\n\n\n\n\njob\nJobType\nThe job to prepare for execution\n\n\nReturns\nDict\nDictionary of parameters for the worker execute request\n\n\n\n\nsource\n\n\nBaseJobManager.extract_job_result\n\n BaseJobManager.extract_job_result (job:~JobType,\n                                    result_data:Dict[str,Any])\n\nExtract and format job result from worker response.\n\n\n\n\nType\nDetails\n\n\n\n\njob\nJobType\nThe job that was executed\n\n\nresult_data\nDict\nRaw result data from worker\n\n\nReturns\nDict\nFormatted result for storage",
+    "crumbs": [
+      "managers",
+      "base"
+    ]
+  },
+  {
+    "objectID": "managers/base.html#hook-methods",
+    "href": "managers/base.html#hook-methods",
+    "title": "base",
+    "section": "Hook Methods",
+    "text": "Hook Methods\nThese methods provide extension points for subclasses to customize behavior without overriding core functionality.\nThis hook extracts a plugin resource identifier from the plugin configuration for resource tracking. The default implementation tries common keys (resource_id, model_id, model, model_name) but subclasses can override this to match their specific configuration structure.\nExample override:\ndef _extract_plugin_resource_identifier(self, config):\n    # Custom logic for your plugin system\n    return config.get('resource_path', 'unknown')\nThis hook allows you to implement custom validation before starting a job. Return None if validation passes, or an error message string if it fails.\nExample override:\nasync def _validate_resources(self, plugin_id, plugin_config):\n    # Check if another job is already running\n    if self.worker_process and self.current_plugin_id:\n        return \"Another job is already running\"\n    \n    # Check GPU availability\n    if plugin_config.get('device') == 'cuda':\n        if not torch.cuda.is_available():\n            return \"CUDA not available\"\n    \n    return None  # Validation passed\nThis hook is called automatically when a job completes successfully. Use it to implement post-processing logic like saving results, sending notifications, or triggering follow-up tasks.\nExample override:\ndef _on_job_completed(self, job_id):\n    job = self.get_job(job_id)\n    result = self.get_job_result(job_id)\n    \n    # Save result to disk\n    output_path = f\"results/{job_id}.json\"\n    with open(output_path, 'w') as f:\n        json.dump(result, f)\n    \n    # Track completion count\n    self.completed_count += 1\n    \n    print(f\"Job {job_id} completed and saved to {output_path}\")",
+    "crumbs": [
+      "managers",
+      "base"
+    ]
+  },
+  {
+    "objectID": "managers/base.html#worker-lifecycle-management",
+    "href": "managers/base.html#worker-lifecycle-management",
+    "title": "base",
+    "section": "Worker Lifecycle Management",
+    "text": "Worker Lifecycle Management",
+    "crumbs": [
+      "managers",
+      "base"
+    ]
+  },
+  {
+    "objectID": "managers/base.html#result-monitoring-and-handling",
+    "href": "managers/base.html#result-monitoring-and-handling",
+    "title": "base",
+    "section": "Result Monitoring and Handling",
+    "text": "Result Monitoring and Handling",
+    "crumbs": [
+      "managers",
+      "base"
+    ]
+  },
+  {
+    "objectID": "managers/base.html#plugin-management-methods",
+    "href": "managers/base.html#plugin-management-methods",
+    "title": "base",
+    "section": "Plugin Management Methods",
+    "text": "Plugin Management Methods\n\nsource\n\nBaseJobManager.get_plugin_name\n\n BaseJobManager.get_plugin_name (plugin_id:str)\n\nGet plugin name from plugin ID (requires plugin registry).\n\n\n\n\nType\nDetails\n\n\n\n\nplugin_id\nstr\nPlugin unique identifier\n\n\nReturns\nOptional\nPlugin name or None\n\n\n\n\nsource\n\n\nBaseJobManager.unload_plugin\n\n BaseJobManager.unload_plugin (plugin_name:str)\n\nUnload a plugin from the worker to free resources.\n\n\n\n\nType\nDetails\n\n\n\n\nplugin_name\nstr\nName of the plugin to unload\n\n\nReturns\nbool\nTrue if successful, False otherwise\n\n\n\n\nsource\n\n\nBaseJobManager.reload_plugin\n\n BaseJobManager.reload_plugin (plugin_name:str, config:Dict[str,Any])\n\nReload a plugin with new configuration.\n\n\n\n\nType\nDetails\n\n\n\n\nplugin_name\nstr\nName of the plugin to reload\n\n\nconfig\nDict\nNew configuration\n\n\nReturns\nbool\nTrue if successful, False otherwise",
+    "crumbs": [
+      "managers",
+      "base"
+    ]
+  },
+  {
+    "objectID": "managers/base.html#job-management-methods",
+    "href": "managers/base.html#job-management-methods",
+    "title": "base",
+    "section": "Job Management Methods",
+    "text": "Job Management Methods\n\nsource\n\nBaseJobManager.start_job\n\n BaseJobManager.start_job (plugin_id:str, **kwargs)\n\nStart a new job.\n\n\n\n\nType\nDetails\n\n\n\n\nplugin_id\nstr\nPlugin unique identifier\n\n\nkwargs\nVAR_KEYWORD\n\n\n\nReturns\nJobType\nCreated and started job\n\n\n\n\nsource\n\n\nBaseJobManager.cancel_job\n\n BaseJobManager.cancel_job (job_id:str)\n\nCancel a running job by terminating the worker process.\n\n\n\n\nType\nDetails\n\n\n\n\njob_id\nstr\nID of the job to cancel\n\n\nReturns\nbool\nTrue if cancellation successful\n\n\n\n\nsource\n\n\nBaseJobManager.get_job\n\n BaseJobManager.get_job (job_id:str)\n\nGet a job by ID.\n\n\n\n\nType\nDetails\n\n\n\n\njob_id\nstr\nUnique job identifier\n\n\nReturns\nOptional\nJob object or None\n\n\n\n\nsource\n\n\nBaseJobManager.get_all_jobs\n\n BaseJobManager.get_all_jobs ()\n\nGet all jobs.\n\nsource\n\n\nBaseJobManager.get_job_result\n\n BaseJobManager.get_job_result (job_id:str)\n\nGet job result.\n\n\n\n\nType\nDetails\n\n\n\n\njob_id\nstr\nUnique job identifier\n\n\nReturns\nOptional\nJob result or None\n\n\n\n\nsource\n\n\nBaseJobManager.clear_completed_jobs\n\n BaseJobManager.clear_completed_jobs ()\n\nClear completed, failed, and cancelled jobs.",
+    "crumbs": [
+      "managers",
+      "base"
+    ]
+  },
+  {
+    "objectID": "managers/base.html#utility-methods",
+    "href": "managers/base.html#utility-methods",
+    "title": "base",
+    "section": "Utility Methods",
+    "text": "Utility Methods",
+    "crumbs": [
+      "managers",
+      "base"
+    ]
+  },
+  {
+    "objectID": "managers/base.html#usage-example",
+    "href": "managers/base.html#usage-example",
+    "title": "base",
+    "section": "Usage Example",
+    "text": "Usage Example\nTo use BaseJobManager, create a concrete subclass that implements the required abstract methods. Here’s a minimal example structure:\nfrom dataclasses import dataclass\nfrom cjm_fasthtml_workers.managers.base import BaseJobManager, BaseJob\n\n@dataclass\nclass MyJob(BaseJob):\n    \"\"\"Custom job type with domain-specific fields.\"\"\"\n    input_text: str = \"\"\n    \nclass MyJobManager(BaseJobManager[MyJob]):\n    \"\"\"Concrete job manager implementation.\"\"\"\n    \n    def create_job(self, plugin_id: str, **kwargs) -&gt; MyJob:\n        \"\"\"Create a job instance.\"\"\"\n        return MyJob(\n            id=str(uuid.uuid4()),\n            plugin_id=plugin_id,\n            input_text=kwargs.get('input_text', '')\n        )\n    \n    def get_worker_entry_point(self) -&gt; Callable:\n        \"\"\"Return the worker function.\"\"\"\n        return my_worker_process\n    \n    def prepare_execute_request(self, job: MyJob) -&gt; Dict[str, Any]:\n        \"\"\"Convert job to execution parameters.\"\"\"\n        return {'text': job.input_text}\n    \n    def extract_job_result(self, job: MyJob, result_data: Dict[str, Any]) -&gt; Dict[str, Any]:\n        \"\"\"Format the result.\"\"\"\n        return result_data\n\n# Create and use the manager\nmanager = MyJobManager(\n    worker_type=\"text_processing\",\n    category=\"processing\",\n    worker_config=WorkerConfig()\n)\n\n# Start a job\njob = await manager.start_job(plugin_id=\"my-plugin\", input_text=\"Hello World\")\nFor a complete working example, see the demo_app.py file in the repository.\n\nsource\n\nBaseJobManager.broadcast_event\n\n BaseJobManager.broadcast_event (event_type:str, data:Dict[str,Any])\n\nBroadcast an event to all connected SSE clients (requires event broadcaster).\n\n\n\n\nType\nDetails\n\n\n\n\nevent_type\nstr\nEvent type identifier\n\n\ndata\nDict\nEvent data payload\n\n\n\n\nsource\n\n\nBaseJobManager.check_streaming_support\n\n BaseJobManager.check_streaming_support (plugin_id:str)\n\nCheck if a plugin supports streaming.\n\n\n\n\nType\nDetails\n\n\n\n\nplugin_id\nstr\nPlugin unique identifier\n\n\nReturns\nbool\nTrue if streaming supported\n\n\n\n\nsource\n\n\nBaseJobManager.shutdown\n\n BaseJobManager.shutdown ()\n\nShutdown the manager and cleanup resources.",
+    "crumbs": [
+      "managers",
+      "base"
+    ]
+  },
+  {
+    "objectID": "core/protocol.html",
+    "href": "core/protocol.html",
+    "title": "protocol",
+    "section": "",
+    "text": "These enums define the message types used for communication between the parent process and worker processes. The parent sends requests and the worker responds with various response types.\n\nsource\n\n\n\n WorkerRequestType (value, names=None, module=None, qualname=None,\n                    type=None, start=1, boundary=None)\n\nTypes of requests sent to worker process.\n\nsource\n\n\n\n\n WorkerResponseType (value, names=None, module=None, qualname=None,\n                     type=None, start=1, boundary=None)\n\nTypes of responses from worker process.",
+    "crumbs": [
+      "core",
+      "protocol"
+    ]
+  },
+  {
+    "objectID": "core/protocol.html#request-and-response-types",
+    "href": "core/protocol.html#request-and-response-types",
+    "title": "protocol",
+    "section": "",
+    "text": "These enums define the message types used for communication between the parent process and worker processes. The parent sends requests and the worker responds with various response types.\n\nsource\n\n\n\n WorkerRequestType (value, names=None, module=None, qualname=None,\n                    type=None, start=1, boundary=None)\n\nTypes of requests sent to worker process.\n\nsource\n\n\n\n\n WorkerResponseType (value, names=None, module=None, qualname=None,\n                     type=None, start=1, boundary=None)\n\nTypes of responses from worker process.",
+    "crumbs": [
+      "core",
+      "protocol"
+    ]
+  },
+  {
+    "objectID": "core/protocol.html#data-structures",
+    "href": "core/protocol.html#data-structures",
+    "title": "protocol",
+    "section": "Data Structures",
+    "text": "Data Structures\nThese dataclasses define the structure of messages passed through multiprocessing queues. They provide to_dict() and from_dict() methods for serialization since objects passed through queues need to be picklable.\n\nsource\n\nWorkerRequest\n\n WorkerRequest (type:__main__.WorkerRequestType, data:Dict[str,Any])\n\nBase structure for worker requests.\n\n# Test WorkerRequest serialization\nrequest = WorkerRequest(\n    type=WorkerRequestType.EXECUTE,\n    data={'job_id': 'test-123', 'plugin_name': 'test_plugin', 'param1': 'value1'}\n)\nrequest\n\nWorkerRequest(type=&lt;WorkerRequestType.EXECUTE: 'execute'&gt;, data={'job_id': 'test-123', 'plugin_name': 'test_plugin', 'param1': 'value1'})\n\n\n\n# Test to_dict conversion\nrequest_dict = request.to_dict()\nrequest_dict\n\n{'type': 'execute',\n 'job_id': 'test-123',\n 'plugin_name': 'test_plugin',\n 'param1': 'value1'}\n\n\n\n# Test from_dict deserialization\nrestored_request = WorkerRequest.from_dict(request_dict)\nrestored_request\n\nWorkerRequest(type=&lt;WorkerRequestType.EXECUTE: 'execute'&gt;, data={'job_id': 'test-123', 'plugin_name': 'test_plugin', 'param1': 'value1'})\n\n\n\nsource\n\n\nWorkerResponse\n\n WorkerResponse (type:__main__.WorkerResponseType, data:Dict[str,Any])\n\nBase structure for worker responses.\n\n# Test WorkerResponse\nresponse = WorkerResponse(\n    type=WorkerResponseType.RESULT,\n    data={'job_id': 'test-123', 'status': 'success', 'data': {'output': 'result'}}\n)\nresponse_dict = response.to_dict()\nresponse_dict\n\n{'type': 'result',\n 'job_id': 'test-123',\n 'status': 'success',\n 'data': {'output': 'result'}}\n\n\n\nsource\n\n\nWorkerStreamChunk\n\n WorkerStreamChunk (job_id:str, chunk:str, is_final:bool=False,\n                    metadata:Optional[Dict[str,Any]]=None)\n\nStructure for streaming job results.\n\n# Test WorkerStreamChunk\nchunk = WorkerStreamChunk(\n    job_id='test-456',\n    chunk='This is a streaming chunk',\n    is_final=False,\n    metadata={'index': 1}\n)\nchunk.to_dict()\n\n{'type': 'stream_chunk',\n 'job_id': 'test-456',\n 'chunk': 'This is a streaming chunk',\n 'is_final': False,\n 'metadata': {'index': 1}}\n\n\n\nsource\n\n\nWorkerResult\n\n WorkerResult (job_id:str, status:str, data:Optional[Dict[str,Any]]=None,\n               error:Optional[str]=None)\n\nStructure for job execution results.\n\n# Test WorkerResult - success case\nresult = WorkerResult(\n    job_id='test-789',\n    status='success',\n    data={'text': 'Job completed successfully', 'metadata': {'time': 1.5}}\n)\nresult.to_dict()\n\n{'type': 'result',\n 'job_id': 'test-789',\n 'status': 'success',\n 'data': {'text': 'Job completed successfully', 'metadata': {'time': 1.5}}}\n\n\n\n# Test WorkerResult - error case\nerror_result = WorkerResult(\n    job_id='test-999',\n    status='error',\n    error='Plugin execution failed: Invalid input'\n)\nerror_result.to_dict()\n\n{'type': 'result',\n 'job_id': 'test-999',\n 'status': 'error',\n 'error': 'Plugin execution failed: Invalid input'}",
+    "crumbs": [
+      "core",
+      "protocol"
+    ]
+  },
+  {
+    "objectID": "core/protocol.html#plugin-manager-protocol",
+    "href": "core/protocol.html#plugin-manager-protocol",
+    "title": "protocol",
+    "section": "Plugin Manager Protocol",
+    "text": "Plugin Manager Protocol\nThe PluginManagerAdapter is a Protocol class that uses structural subtyping (duck typing). Any class that implements these methods will satisfy the protocol, even without explicit inheritance.\nThis protocol defines the interface that plugin managers must implement to work with the worker system. It handles: - Plugin discovery and loading - Plugin execution (both standard and streaming) - Plugin lifecycle management (reload/unload) - Streaming capability detection\n\nsource\n\nPluginManagerAdapter\n\n PluginManagerAdapter (*args, **kwargs)\n\n*Protocol that plugin managers must satisfy for worker integration.\nUses structural subtyping (duck typing) - plugin managers don’t need to explicitly inherit from this, they just need to implement these methods.*",
+    "crumbs": [
+      "core",
+      "protocol"
+    ]
+  },
+  {
+    "objectID": "core/adapters.html",
+    "href": "core/adapters.html",
+    "title": "adapters",
+    "section": "",
+    "text": "source\n\n\n\n create_simple_adapter (plugin_manager:Any,\n                        result_adapter:Optional[&lt;built-\n                        infunctioncallable&gt;]=None)\n\nCreate a simple adapter for a plugin manager.\n\n\n\n\n\n\n\n\n\n\nType\nDefault\nDetails\n\n\n\n\nplugin_manager\nAny\n\nThe plugin manager instance to adapt\n\n\nresult_adapter\nOptional\nNone\nOptional function to convert plugin results to dict\n\n\nReturns\nPluginManagerAdapter\n\nAdapter that satisfies PluginManagerAdapter protocol\n\n\n\nThe create_simple_adapter function is useful when you have an existing plugin manager that doesn’t explicitly implement the PluginManagerAdapter protocol. It wraps your plugin manager and ensures it has all the required methods.\nYou can optionally provide a result_adapter function to transform plugin execution results into a standard dictionary format. This is helpful when different plugins return results in different formats.\n\n# Create a mock plugin manager for testing\nclass MockPluginManager:\n    def discover_plugins(self):\n        return [type('Plugin', (), {'name': 'test_plugin'})]\n    \n    def load_plugin(self, plugin_data, config):\n        pass\n    \n    def execute_plugin(self, plugin_name, **params):\n        return {'result': f'Executed {plugin_name}'}\n    \n    def execute_plugin_stream(self, plugin_name, **params):\n        yield f'Stream from {plugin_name}'\n    \n    def reload_plugin(self, plugin_name, config=None):\n        pass\n    \n    def unload_plugin(self, plugin_name):\n        pass\n    \n    def check_streaming_support(self, plugin_name):\n        return True\n\n# Test creating an adapter\nmock_manager = MockPluginManager()\nadapter = create_simple_adapter(mock_manager)\nadapter\n\n&lt;__main__.create_simple_adapter.&lt;locals&gt;.SimpleAdapter&gt;\n\n\n\n# Test adapter methods\nadapter.discover_plugins()\n\n[__main__.Plugin]\n\n\n\n# Test execution\nadapter.execute_plugin('test_plugin', param1='value1')\n\n{'result': 'Executed test_plugin'}\n\n\n\n# Test with custom result adapter\ndef custom_adapter(result):\n    return {'transformed': True, 'original': result}\n\nadapter_with_transform = create_simple_adapter(mock_manager, result_adapter=custom_adapter)\nadapter_with_transform.execute_plugin('test_plugin')\n\n{'transformed': True, 'original': {'result': 'Executed test_plugin'}}",
+    "crumbs": [
+      "core",
+      "adapters"
+    ]
+  },
+  {
+    "objectID": "core/adapters.html#simple-adapter-factory",
+    "href": "core/adapters.html#simple-adapter-factory",
+    "title": "adapters",
+    "section": "",
+    "text": "source\n\n\n\n create_simple_adapter (plugin_manager:Any,\n                        result_adapter:Optional[&lt;built-\n                        infunctioncallable&gt;]=None)\n\nCreate a simple adapter for a plugin manager.\n\n\n\n\n\n\n\n\n\n\nType\nDefault\nDetails\n\n\n\n\nplugin_manager\nAny\n\nThe plugin manager instance to adapt\n\n\nresult_adapter\nOptional\nNone\nOptional function to convert plugin results to dict\n\n\nReturns\nPluginManagerAdapter\n\nAdapter that satisfies PluginManagerAdapter protocol\n\n\n\nThe create_simple_adapter function is useful when you have an existing plugin manager that doesn’t explicitly implement the PluginManagerAdapter protocol. It wraps your plugin manager and ensures it has all the required methods.\nYou can optionally provide a result_adapter function to transform plugin execution results into a standard dictionary format. This is helpful when different plugins return results in different formats.\n\n# Create a mock plugin manager for testing\nclass MockPluginManager:\n    def discover_plugins(self):\n        return [type('Plugin', (), {'name': 'test_plugin'})]\n    \n    def load_plugin(self, plugin_data, config):\n        pass\n    \n    def execute_plugin(self, plugin_name, **params):\n        return {'result': f'Executed {plugin_name}'}\n    \n    def execute_plugin_stream(self, plugin_name, **params):\n        yield f'Stream from {plugin_name}'\n    \n    def reload_plugin(self, plugin_name, config=None):\n        pass\n    \n    def unload_plugin(self, plugin_name):\n        pass\n    \n    def check_streaming_support(self, plugin_name):\n        return True\n\n# Test creating an adapter\nmock_manager = MockPluginManager()\nadapter = create_simple_adapter(mock_manager)\nadapter\n\n&lt;__main__.create_simple_adapter.&lt;locals&gt;.SimpleAdapter&gt;\n\n\n\n# Test adapter methods\nadapter.discover_plugins()\n\n[__main__.Plugin]\n\n\n\n# Test execution\nadapter.execute_plugin('test_plugin', param1='value1')\n\n{'result': 'Executed test_plugin'}\n\n\n\n# Test with custom result adapter\ndef custom_adapter(result):\n    return {'transformed': True, 'original': result}\n\nadapter_with_transform = create_simple_adapter(mock_manager, result_adapter=custom_adapter)\nadapter_with_transform.execute_plugin('test_plugin')\n\n{'transformed': True, 'original': {'result': 'Executed test_plugin'}}",
+    "crumbs": [
+      "core",
+      "adapters"
+    ]
+  },
+  {
+    "objectID": "core/adapters.html#default-result-adapter",
+    "href": "core/adapters.html#default-result-adapter",
+    "title": "adapters",
+    "section": "Default Result Adapter",
+    "text": "Default Result Adapter\n\nsource\n\ndefault_result_adapter\n\n default_result_adapter (result:Any)\n\nDefault adapter for converting plugin results to dictionaries.\n\n\n\n\nType\nDetails\n\n\n\n\nresult\nAny\nPlugin execution result\n\n\nReturns\nDict\nDictionary with text and metadata\n\n\n\nThe default_result_adapter handles three common cases: 1. Results that are already dictionaries (pass-through) 2. Objects with text and metadata attributes 3. Plain values (converted to string for the text field)\n\n# Test with dict input\nresult_dict = {'text': 'Hello', 'metadata': {'key': 'value'}}\ndefault_result_adapter(result_dict)\n\n{'text': 'Hello', 'metadata': {'key': 'value'}}\n\n\n\n# Test with object that has text and metadata attributes\nclass DummyResult:\n    def __init__(self):\n        self.text = \"Result text\"\n        self.metadata = {\"source\": \"test\"}\n\ndefault_result_adapter(DummyResult())\n\n{'text': 'Result text', 'metadata': {'source': 'test'}}\n\n\n\n# Test with plain string\ndefault_result_adapter(\"Plain text result\")\n\n{'text': 'Plain text result', 'metadata': {}}",
+    "crumbs": [
+      "core",
+      "adapters"
+    ]
+  }
+]
